@@ -1,13 +1,12 @@
 /**
- * UYT 도메인 타입.
+ * UYT 도메인 타입(앱 representation).
  *
- * Supabase 스키마는 M1 에서 확정되며, 그 시점에 `database.types.ts`를 자동 생성하고
- * 이 파일은 거기서 추출한 Row 타입을 alias 하는 식으로 정리합니다.
- * 지금은 features/* 가 컴파일될 수 있도록 하는 최소한의 형태만 둡니다.
+ * DB Row 는 snake_case 이고 `database.types.ts` 에 있다.
+ * 이 파일은 그것을 mapper 로 변환한 뒤의 camelCase 모양이다.
+ * features/* 의 hook / component 가 들고 다니는 타입.
  */
 
-export type GroupRole = 'admin' | 'member' | 'guest';
-export type GroupVisibility = 'private' | 'invite_only' | 'public';
+export type { GroupRole, GroupVisibility } from '../supabase/database.types';
 
 export type TrpgSystem =
   | 'coc7'

@@ -1,0 +1,72 @@
+# Supabase 로컬 설정.
+#
+# 이 파일은 `supabase init` 으로 생성되는 표준 구성에 UYT 가 필요한 부분만 활성화한 것.
+# 실제로 `supabase start` 를 실행할 때 이 값을 사용한다.
+#
+# 변경 시 `supabase stop && supabase start` 또는 `supabase status` 로 재적용.
+
+project_id = "uncover-your-tales"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[db.pooler]
+enabled = false
+
+[realtime]
+enabled = true
+
+[studio]
+enabled = true
+port = 54323
+api_url = "http://127.0.0.1:54321"
+
+[inbucket]
+enabled = true
+port = 54324
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173/auth/callback"]
+jwt_expiry = 3600
+enable_signup = true
+enable_anonymous_sign_ins = false
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+
+# Discord OAuth — secrets 는 .env 에 (VITE_ 가 아닌 SUPABASE_AUTH_EXTERNAL_DISCORD_*).
+# 로컬에서는 Discord Developer Portal 에서 redirect 를
+#   http://127.0.0.1:54321/auth/v1/callback
+# 으로 등록.
+[auth.external.discord]
+enabled = true
+client_id = "env(SUPABASE_AUTH_EXTERNAL_DISCORD_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_EXTERNAL_DISCORD_SECRET)"
+redirect_uri = ""
+
+[auth.external.google]
+enabled = true
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
+redirect_uri = ""
+
+[edge_runtime]
+enabled = true
+policy = "oneshot"
