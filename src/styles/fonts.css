@@ -1,1 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+/* UYT 본문/UI 폰트: Pretendard (한글) + Inter (영문 fallback)
+   디자인 패스(M9) 때 토스 톤에 맞춰 무게/자간 다시 정리 */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
