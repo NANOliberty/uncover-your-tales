@@ -76,18 +76,20 @@ export function GroupsPage() {
             <CardDescription>친구들을 초대해 새 그룹을 시작합니다.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button disabled>준비 중 — M1.4</Button>
+            <Button asChild>
+              <Link to="/groups/new">새 그룹 만들기</Link>
+            </Button>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
             <CardTitle>초대 코드로 참여</CardTitle>
-            <CardDescription>받은 6자리 코드를 입력하세요.</CardDescription>
+            <CardDescription>받은 6~12자리 코드를 입력하세요.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button variant="outline" disabled>
-              준비 중 — M1.4
+            <Button asChild variant="outline">
+              <Link to="/groups/join">코드 입력</Link>
             </Button>
           </CardContent>
         </Card>

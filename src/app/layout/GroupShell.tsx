@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Navigate, NavLink, Outlet, useParams } from 'react-router';
 import { useActiveGroupStore } from '../features/groups/active-group-store';
-import { useGroupBySlug } from '../features/groups/api';
+import { useGroupBySlug, useMyMembership } from '../features/groups/api';
 
 /**
  * `/g/:slug/*` 의 컨텍스트 레이아웃.
@@ -21,6 +21,8 @@ export function GroupShell() {
   const { slug } = useParams<{ slug: string }>();
   const setActiveSlug = useActiveGroupStore((s) => s.setActiveSlug);
   const { data: group, isLoading, isError } = useGroupBySlug(slug);
+  const { data: role } = useMyMembership(group?.id);
+  const isAdmin = role === 'admin';
 
   useEffect(() => {
     if (group) setActiveSlug(group.slug);
@@ -77,6 +79,22 @@ export function GroupShell() {
                 {item.label}
               </NavLink>
             ))}
+            {isAdmin && (
+              <NavLink
+                to="settings"
+                end={false}
+                className={({ isActive }) =>
+                  [
+                    'ml-auto whitespace-nowrap rounded-md px-3 py-1.5 text-sm transition',
+                    isActive
+                      ? 'bg-secondary text-secondary-foreground'
+                      : 'text-muted-foreground hover:text-foreground',
+                  ].join(' ')
+                }
+              >
+                설정
+              </NavLink>
+            )}
           </nav>
         </div>
       </div>

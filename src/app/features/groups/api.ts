@@ -50,4 +50,27 @@ export function useGroupBySlug(slug: string | undefined) {
   });
 }
 
+/**
+ * 현재 사용자의 그룹 내 역할. 멤버가 아니면 null.
+ * RLS 가 다른 사람의 row 를 막아주지만, 명시적으로 user_id = auth.uid() 로 좁힌다.
+ */
+export function useMyMembership(groupId: string | undefined) {
+  const { user } = useSession();
+  return useQuery({
+    queryKey: ['groupMembership', groupId, user?.id],
+    enabled: !!groupId && !!user,
+    queryFn: async () => {
+      if (!groupId || !user) return null;
+      const { data, error } = await supabase
+        .from('group_members')
+        .select('role')
+        .eq('group_id', groupId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data?.role ?? null;
+    },
+  });
+}
+
 export const groupsQueryKeys = groupsKeys;

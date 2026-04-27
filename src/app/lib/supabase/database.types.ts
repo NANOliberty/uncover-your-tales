@@ -116,6 +116,52 @@ export type Database = {
           },
         ];
       };
+      group_invitations: {
+        Row: {
+          id: string;
+          group_id: string;
+          code: string;
+          created_by: string;
+          max_uses: number;
+          uses: number;
+          expires_at: string | null;
+          default_role: Database['public']['Enums']['group_role'];
+          revoked_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          group_id: string;
+          code: string;
+          created_by: string;
+          max_uses?: number;
+          uses?: number;
+          expires_at?: string | null;
+          default_role?: Database['public']['Enums']['group_role'];
+          revoked_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          group_id?: string;
+          code?: string;
+          created_by?: string;
+          max_uses?: number;
+          uses?: number;
+          expires_at?: string | null;
+          default_role?: Database['public']['Enums']['group_role'];
+          revoked_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'group_invitations_group_id_fkey';
+            columns: ['group_id'];
+            referencedRelation: 'groups';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -126,6 +172,25 @@ export type Database = {
       is_group_admin: {
         Args: { p_group_id: string };
         Returns: boolean;
+      };
+      peek_invite: {
+        Args: { p_code: string };
+        Returns: {
+          group_id: string;
+          group_name: string;
+          group_slug: string;
+          default_role: Database['public']['Enums']['group_role'];
+          expires_at: string | null;
+          remaining_uses: number;
+        }[];
+      };
+      redeem_invite: {
+        Args: { p_code: string };
+        Returns: string;
+      };
+      generate_invite_code: {
+        Args: Record<string, never>;
+        Returns: string;
       };
     };
     Enums: {
@@ -140,5 +205,6 @@ export type Database = {
 export type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 export type GroupRow = Database['public']['Tables']['groups']['Row'];
 export type GroupMemberRow = Database['public']['Tables']['group_members']['Row'];
+export type GroupInvitationRow = Database['public']['Tables']['group_invitations']['Row'];
 export type GroupRole = Database['public']['Enums']['group_role'];
 export type GroupVisibility = Database['public']['Enums']['group_visibility'];
