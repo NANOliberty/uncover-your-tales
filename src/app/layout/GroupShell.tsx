@@ -1,13 +1,13 @@
 import { useEffect } from 'react';
-import { NavLink, Outlet, useParams } from 'react-router';
+import { Navigate, NavLink, Outlet, useParams } from 'react-router';
 import { useActiveGroupStore } from '../features/groups/active-group-store';
+import { useGroupBySlug } from '../features/groups/api';
 
 /**
- * 그룹 컨텍스트 레이아웃 — `/g/:slug/*` 의 공통 헤더 역할.
- *
- * 지금은 슬러그를 활성 그룹 스토어에 동기화하고 컨텍스트 네비게이션을 보여준다.
- * M1.3 에서 useGroupBySlug() 로 실 데이터를 끌어와 슬러그가 유효하지 않으면
- * /groups 로 리다이렉트하고, 그룹 이름과 로고를 표시한다.
+ * `/g/:slug/*` 의 컨텍스트 레이아웃.
+ * - 슬러그를 검증한다 — 존재하지 않거나 RLS 로 막히면 /groups 로.
+ * - 그룹 정보(이름, 로고)를 표시한다.
+ * - 활성 슬러그를 영속 스토어에 동기화 — 다음 방문 시 마지막 그룹으로 부드럽게 복귀.
  */
 const subnav = [
   { to: 'characters', label: '캐릭터' },
@@ -18,21 +18,46 @@ const subnav = [
 ];
 
 export function GroupShell() {
-  const { slug = '' } = useParams<{ slug: string }>();
-  const setActiveGroupId = useActiveGroupStore((s) => s.setActiveGroupId);
+  const { slug } = useParams<{ slug: string }>();
+  const setActiveSlug = useActiveGroupStore((s) => s.setActiveSlug);
+  const { data: group, isLoading, isError } = useGroupBySlug(slug);
 
-  // M1.3 에서 slug → group_id 매핑으로 교체.
   useEffect(() => {
-    setActiveGroupId(slug || null);
-  }, [slug, setActiveGroupId]);
+    if (group) setActiveSlug(group.slug);
+  }, [group, setActiveSlug]);
+
+  if (isLoading) {
+    return (
+      <div className="mx-auto max-w-6xl px-6 py-8 text-sm text-muted-foreground">
+        그룹 정보 불러오는 중…
+      </div>
+    );
+  }
+
+  if (isError || !group) {
+    return <Navigate to="/groups" replace />;
+  }
 
   return (
     <div className="flex flex-col">
       <div className="border-b">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-6 py-3">
-          <div className="flex items-baseline gap-2">
-            <span className="text-xs uppercase tracking-wide text-muted-foreground">그룹</span>
-            <span className="font-medium">{slug}</span>
+          <div className="flex items-center gap-3">
+            {group.logo_url ? (
+              <img
+                src={group.logo_url}
+                alt=""
+                className="h-7 w-7 rounded-md border object-cover"
+              />
+            ) : (
+              <div className="flex h-7 w-7 items-center justify-center rounded-md border bg-muted text-xs font-medium text-muted-foreground">
+                {group.name.charAt(0)}
+              </div>
+            )}
+            <div className="flex flex-col leading-tight">
+              <span className="text-sm font-medium">{group.name}</span>
+              <span className="text-xs text-muted-foreground">/g/{group.slug}</span>
+            </div>
           </div>
           <nav className="-mx-2 flex items-center gap-1 overflow-x-auto">
             {subnav.map((item) => (
@@ -56,7 +81,7 @@ export function GroupShell() {
         </div>
       </div>
 
-      <Outlet />
+      <Outlet context={{ group }} />
     </div>
   );
 }

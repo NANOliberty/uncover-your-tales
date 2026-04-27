@@ -1,6 +1,7 @@
-import { Link, NavLink, Outlet, useLocation } from 'react-router';
-import { useActiveGroupStore } from '../features/groups/active-group-store';
+import { Link, NavLink, Outlet } from 'react-router';
+import { GroupSwitcher } from './GroupSwitcher';
 import { UserMenu } from './UserMenu';
+import { useSession } from '../features/auth/useSession';
 
 const globalNav = [
   { to: '/', label: '홈', end: true },
@@ -8,9 +9,7 @@ const globalNav = [
 ];
 
 export function AppShell() {
-  const activeGroupId = useActiveGroupStore((s) => s.activeGroupId);
-  const location = useLocation();
-  const inGroupContext = location.pathname.startsWith('/g/');
+  const { user } = useSession();
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -39,24 +38,10 @@ export function AppShell() {
                 {item.label}
               </NavLink>
             ))}
-            {!inGroupContext && activeGroupId && (
-              <NavLink
-                to={`/g/${activeGroupId}`}
-                className={({ isActive }) =>
-                  [
-                    'rounded-md px-3 py-1.5 text-sm transition',
-                    isActive
-                      ? 'bg-secondary text-secondary-foreground'
-                      : 'text-muted-foreground hover:text-foreground',
-                  ].join(' ')
-                }
-              >
-                {activeGroupId}
-              </NavLink>
-            )}
           </nav>
 
           <div className="ml-auto flex items-center gap-3">
+            {user && <GroupSwitcher />}
             <UserMenu />
           </div>
         </div>
@@ -67,7 +52,7 @@ export function AppShell() {
       </main>
 
       <footer className="border-t py-6 text-center text-xs text-muted-foreground">
-        Uncover Your Tales · 친구 그룹 폐쇄 운영 · v0.0.0 (M1.2)
+        Uncover Your Tales · 친구 그룹 폐쇄 운영 · v0.0.0 (M1.3)
       </footer>
     </div>
   );

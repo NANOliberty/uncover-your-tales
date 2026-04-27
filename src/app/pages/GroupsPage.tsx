@@ -1,16 +1,18 @@
+import { Link } from 'react-router';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { useSession } from '../features/auth/useSession';
+import { useMyGroups } from '../features/groups/api';
 
 /**
  * 인증 사용자의 허브.
- * - 소속 그룹 목록 (M1.3 에서 실 데이터)
- * - 그룹 만들기 / 초대 코드 입력 진입점 (M1.4)
- *
- * 지금은 placeholder 카드 두 개만.
+ * - 내 그룹 목록 (RLS 가 알아서 거름)
+ * - 빈 상태에서 그룹 만들기 / 초대 코드 입력 (M1.4 에서 활성화)
  */
 export function GroupsPage() {
   const { user } = useSession();
+  const { data: groups = [], isLoading } = useMyGroups();
+
   const greetingName =
     (user?.user_metadata as Record<string, string | undefined> | undefined)?.full_name ??
     user?.email ??
@@ -24,12 +26,50 @@ export function GroupsPage() {
           {greetingName}님, 어느 테이블로 가시겠어요?
         </h1>
         <p className="mt-2 text-muted-foreground">
-          모든 콘텐츠는 그룹 단위로 보관됩니다. 친구가 보낸 초대 코드가 있다면 입력하고,
-          없다면 새로 만드세요.
+          모든 콘텐츠는 그룹 단위로 보관됩니다.
         </p>
       </header>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      {isLoading ? (
+        <div className="rounded-lg border bg-card p-6 text-sm text-muted-foreground">
+          그룹 목록 불러오는 중…
+        </div>
+      ) : groups.length === 0 ? (
+        <EmptyState />
+      ) : (
+        <ul className="divide-y rounded-lg border bg-card">
+          {groups.map((g) => (
+            <li key={g.id}>
+              <Link
+                to={`/g/${g.slug}`}
+                className="flex items-center gap-3 px-4 py-3 transition hover:bg-accent"
+              >
+                {g.logo_url ? (
+                  <img
+                    src={g.logo_url}
+                    alt=""
+                    className="h-9 w-9 rounded-md border object-cover"
+                  />
+                ) : (
+                  <div className="flex h-9 w-9 items-center justify-center rounded-md border bg-muted text-sm font-medium text-muted-foreground">
+                    {g.name.charAt(0)}
+                  </div>
+                )}
+                <div className="flex flex-1 flex-col leading-tight">
+                  <span className="text-sm font-medium">{g.name}</span>
+                  <span className="text-xs text-muted-foreground">
+                    /g/{g.slug}
+                    {g.description ? ` · ${g.description}` : ''}
+                  </span>
+                </div>
+                <span className="text-xs text-muted-foreground">→</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>그룹 만들기</CardTitle>
@@ -52,16 +92,17 @@ export function GroupsPage() {
           </CardContent>
         </Card>
       </div>
+    </div>
+  );
+}
 
-      <div className="mt-8 rounded-lg border bg-card p-5 text-sm text-muted-foreground">
-        <p className="font-medium text-foreground">진행 상태</p>
-        <ul className="mt-2 space-y-1">
-          <li>• M1.1 ✓ — 스키마 (profiles / groups / group_members + RLS)</li>
-          <li>• M1.2 ✓ — Discord / Google OAuth + 인증 가드</li>
-          <li>• M1.3 — `/g/:slug` 실 데이터 + 그룹 스위처 (다음)</li>
-          <li>• M1.4 — 그룹 생성 + 초대 코드/링크</li>
-        </ul>
-      </div>
+function EmptyState() {
+  return (
+    <div className="rounded-lg border border-dashed bg-card p-8 text-center">
+      <p className="text-sm font-medium">아직 소속된 그룹이 없습니다.</p>
+      <p className="mt-1 text-sm text-muted-foreground">
+        친구가 보낸 초대 코드가 있다면 입력하고, 없다면 새로 만들어 보세요.
+      </p>
     </div>
   );
 }
