@@ -8,6 +8,7 @@ import { Textarea } from '../components/ui/textarea';
 import { useSession } from '../features/auth/useSession';
 import { useCreateGroup } from '../features/groups/mutations';
 import { isValidSlug, suggestSlug } from '../features/groups/slug';
+import { supabase } from '../lib/supabase/client';
 
 interface FieldErrors {
   name?: string;
@@ -70,6 +71,36 @@ export function CreateGroupPage() {
 
     setSubmitting(true);
     try {
+      // 진단: 서버 측에서 본 인증 상태. RLS 가 거절하기 전에 미리 확인.
+      try {
+        const { data: who, error: whoErr } = await supabase.rpc(
+          'whoami' as never,
+        );
+        // eslint-disable-next-line no-console
+        console.log('[create-group] client user.id:', user.id);
+        // eslint-disable-next-line no-console
+        console.log('[create-group] server whoami:', who, whoErr);
+        const w = who as { auth_uid?: string | null; jwt_present?: boolean } | null;
+        if (w && !w.auth_uid) {
+          toast.error('서버가 로그인 세션을 인식하지 못합니다.', {
+            description: 'JWT 가 부착되지 않았습니다. 새로고침 또는 재로그인 해주세요.',
+          });
+          setSubmitting(false);
+          return;
+        }
+        if (w && w.auth_uid && w.auth_uid !== user.id) {
+          // eslint-disable-next-line no-console
+          console.warn('[create-group] auth uid mismatch', {
+            client: user.id,
+            server: w.auth_uid,
+          });
+        }
+      } catch (e) {
+        // whoami 가 없으면(0004 미적용) 그냥 진행 — fallback 으로 일반 인서트 시도.
+        // eslint-disable-next-line no-console
+        console.warn('[create-group] whoami unavailable (migration 0004 미적용?):', e);
+      }
+
       const group = await createGroup.mutateAsync({
         name: name.trim(),
         slug: slug.trim(),
