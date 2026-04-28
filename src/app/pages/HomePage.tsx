@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { Card, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { useSession } from '../features/auth/useSession';
 
@@ -35,24 +35,24 @@ export function HomePage() {
   const { user, isLoading } = useSession();
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-6 py-12 sm:py-16">
-      <header className="mb-10 max-w-3xl">
+    <div className="mx-auto max-w-6xl px-6 py-10">
+      <header className="mb-8">
         <p className="text-sm text-muted-foreground">Uncover Your Tales</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
+        <h1 className="mt-1 text-3xl font-semibold tracking-tight">
           우리 그룹의 TRPG 아카이브
         </h1>
-        <p className="mt-3 text-base text-muted-foreground sm:text-lg">
+        <p className="mt-2 text-muted-foreground">
           가려져 있던 캠페인과 캐릭터 이야기를 드러냅니다.
         </p>
 
         {!isLoading && (
           <div className="mt-6">
             {user ? (
-              <Button asChild size="lg">
+              <Button asChild>
                 <Link to="/groups">내 그룹으로 →</Link>
               </Button>
             ) : (
-              <Button asChild size="lg">
+              <Button asChild>
                 <Link to="/auth/login">로그인하고 시작하기 →</Link>
               </Button>
             )}
@@ -60,18 +60,19 @@ export function HomePage() {
         )}
       </header>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2">
         {features.map((f) => (
           <Card key={f.title} className="h-full">
             <CardHeader>
-              <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">{f.title}</CardTitle>
-                <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                   {f.badge}
                 </span>
               </div>
-              <CardDescription className="mt-2">{f.desc}</CardDescription>
+              <CardDescription>{f.desc}</CardDescription>
             </CardHeader>
+            <CardContent />
           </Card>
         ))}
       </div>
