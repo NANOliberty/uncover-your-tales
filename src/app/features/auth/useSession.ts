@@ -67,7 +67,7 @@ export async function signInWithGoogle() {
 
 /**
  * 이메일 매직 링크 — OAuth 키가 없어도 로그인할 수 있는 경로.
- * 로컬에서는 Inbucket(http://127.0.0.1:54324) 이 메일을 잡아주므로
+ * 로컬에서는 Mailpit(http://127.0.0.1:54324) 이 메일을 잡아주므로
  * SMTP 설정 없이 즉시 사용 가능.
  */
 export async function signInWithEmailMagicLink(email: string) {

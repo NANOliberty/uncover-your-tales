@@ -34,18 +34,24 @@ npm run dev
 
 ### 2. 백엔드 (Supabase 로컬)
 
-Docker 와 [Supabase CLI](https://supabase.com/docs/guides/cli) 가 필요합니다.
+Docker 만 있으면 됩니다 (`npx supabase` 로 CLI 실행).
 
 ```bash
 # 로컬 Postgres + Auth + Storage + Studio 기동
-supabase start
+npx supabase start
 
-# 출력된 anon key / API URL 을 .env.local 에 채워 넣기
+# 출력된 키 / API URL 을 .env.local 에 채워 넣기
 cp .env.example .env.local
-# 그리고 VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY 수정
+# VITE_SUPABASE_URL          ← Project URL
+# VITE_SUPABASE_ANON_KEY     ← Publishable key (sb_publishable_...)
 ```
 
 `supabase start` 가 처음 실행될 때 `supabase/migrations/*.sql` 이 자동 적용됩니다.
+
+기동 후 접속 정보:
+- Studio (DB GUI): http://127.0.0.1:54323
+- Mailpit (이메일 캡처): http://127.0.0.1:54324
+- API: http://127.0.0.1:54321
 
 스키마를 바꿨을 때:
 

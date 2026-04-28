@@ -107,7 +107,7 @@ export function AuthLoginPage() {
               {email} 으로 로그인 링크를 보냈습니다.
               <br />
               <span className="text-muted-foreground">
-                로컬 개발 환경에서는 Inbucket(<a className="underline" href="http://127.0.0.1:54324" target="_blank" rel="noreferrer">http://127.0.0.1:54324</a>)에서 메일을 확인할 수 있습니다.
+                로컬 개발 환경에서는 Mailpit(<a className="underline" href="http://127.0.0.1:54324" target="_blank" rel="noreferrer">http://127.0.0.1:54324</a>)에서 메일을 확인할 수 있습니다.
               </span>
             </p>
           </div>
