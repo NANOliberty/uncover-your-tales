@@ -1,35 +1,45 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { supabase } from '../lib/supabase/client';
+import { sanitizeNext } from '../features/auth/useSession';
 
 /**
- * Supabase OAuth 콜백.
+ * Supabase OAuth / 매직링크 콜백.
  *
- * Supabase JS 가 detectSessionInUrl: true 로 설정되어 있어 URL 의 access_token /
- * code 를 알아서 처리한다. 이 페이지는 그 직후 onAuthStateChange 가 발화하면
- * 홈으로 보내고, 실패 시 에러를 표시한다.
+ * Supabase JS 가 detectSessionInUrl: true 로 URL 의 token 을 알아서 처리한다.
+ * 이 페이지는 그 직후 onAuthStateChange 가 발화하면 적절한 곳으로 보낸다.
  *
- * 안전망으로 5초 안에 세션이 안 잡히면 로그인 페이지로 복귀.
+ * 라우팅 우선순위:
+ *  1) URL 의 ?next= (로그인 페이지에서 redirectTo 에 인코딩한 원래 위치)
+ *  2) /
+ *
+ * 안전망으로 5초 안에 세션이 안 잡히면 에러 표시.
  */
+function readNext(): string {
+  const params = new URLSearchParams(window.location.search);
+  return sanitizeNext(params.get('next')) ?? '/';
+}
+
 export function AuthCallbackPage() {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+    const target = readNext();
 
     // 즉시 한 번 — 이미 세션이 잡혔을 수 있음.
     supabase.auth.getSession().then(({ data }) => {
       if (cancelled) return;
       if (data.session) {
-        navigate('/', { replace: true });
+        navigate(target, { replace: true });
       }
     });
 
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (cancelled) return;
       if (event === 'SIGNED_IN' && session) {
-        navigate('/', { replace: true });
+        navigate(target, { replace: true });
       }
     });
 

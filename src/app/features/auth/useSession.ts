@@ -8,10 +8,6 @@ const SESSION_KEY = ['auth', 'session'] as const;
 /**
  * 현재 Supabase 세션 + Supabase 의 onAuthStateChange 를 React Query 캐시에 동기화한다.
  * 로그인/로그아웃이 일어나면 캐시가 갱신되어 useSession 을 쓰는 모든 컴포넌트가 리렌더링.
- *
- * - 마운트되지 않은 동안 일어난 변경(예: 다른 탭 로그인) 도
- *   onAuthStateChange 콜백이 처리해준다.
- * - getSession() 은 첫 호출 비용이 약간 있어 React Query 의 staleTime 으로 보호.
  */
 export function useSession() {
   const qc = useQueryClient();
@@ -46,21 +42,21 @@ export async function signOut() {
   await supabase.auth.signOut();
 }
 
-export async function signInWithDiscord() {
+export async function signInWithDiscord(next?: string) {
   return supabase.auth.signInWithOAuth({
     provider: 'discord',
     options: {
-      redirectTo: redirectUrl(),
+      redirectTo: buildRedirect(next),
       scopes: 'identify email',
     },
   });
 }
 
-export async function signInWithGoogle() {
+export async function signInWithGoogle(next?: string) {
   return supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: redirectUrl(),
+      redirectTo: buildRedirect(next),
     },
   });
 }
@@ -70,14 +66,30 @@ export async function signInWithGoogle() {
  * 로컬에서는 Mailpit(http://127.0.0.1:54324) 이 메일을 잡아주므로
  * SMTP 설정 없이 즉시 사용 가능.
  */
-export async function signInWithEmailMagicLink(email: string) {
+export async function signInWithEmailMagicLink(email: string, next?: string) {
   return supabase.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: redirectUrl(),
+      emailRedirectTo: buildRedirect(next),
       shouldCreateUser: true,
     },
   });
+}
+
+/**
+ * `redirectTo` 에 `?next=` 를 끼워 보내, 콜백 페이지가 로그인 후 원래 가려던 곳으로 돌려보낼 수 있게 한다.
+ * 예: 비로그인 상태로 /groups/join?code=ABC 를 열면
+ *  - RequireAuth 가 /auth/login 으로 보내며 state.from 에 위치 저장
+ *  - 로그인 페이지가 next='/groups/join?code=ABC' 를 OAuth/매직링크 redirectTo 에 인코딩
+ *  - 메일·OAuth 라운드트립 후 /auth/callback?next=...&access_token=... 로 도착
+ *  - AuthCallbackPage 가 next 로 navigate
+ */
+function buildRedirect(next?: string): string | undefined {
+  const base = redirectUrl();
+  if (!base) return undefined;
+  const safeNext = sanitizeNext(next);
+  if (!safeNext || safeNext === '/') return base;
+  return `${base}?next=${encodeURIComponent(safeNext)}`;
 }
 
 function redirectUrl() {
@@ -85,4 +97,14 @@ function redirectUrl() {
   if (fromEnv) return fromEnv;
   if (typeof window !== 'undefined') return `${window.location.origin}/auth/callback`;
   return undefined;
+}
+
+/**
+ * Open redirect 방지 — 외부 URL 이나 protocol-relative 는 거부.
+ * 외부에서도 (콜백 페이지의 ?next= 검증 등) 재사용.
+ */
+export function sanitizeNext(next: string | undefined | null): string | undefined {
+  if (!next) return undefined;
+  if (!next.startsWith('/') || next.startsWith('//')) return undefined;
+  return next;
 }

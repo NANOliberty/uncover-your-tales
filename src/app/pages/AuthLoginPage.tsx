@@ -3,15 +3,31 @@ import { Navigate, useLocation } from 'react-router';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import {
+  sanitizeNext,
   signInWithDiscord,
   signInWithEmailMagicLink,
   signInWithGoogle,
   useSession,
 } from '../features/auth/useSession';
 
+interface FromState {
+  pathname?: string;
+  search?: string;
+}
+
+function locationToPath(loc: FromState | undefined): string {
+  if (!loc?.pathname) return '/';
+  return `${loc.pathname}${loc.search ?? ''}`;
+}
+
 export function AuthLoginPage() {
   const { session, isLoading } = useSession();
   const location = useLocation();
+  const fromState = (location.state as { from?: FromState } | null)?.from;
+  // RequireAuth 가 넘긴 from 우선, 없으면 URL 의 ?next= 도 받음 (외부 링크에서 직접 올 때 대비)
+  const directNext = sanitizeNext(new URLSearchParams(location.search).get('next'));
+  const next = locationToPath(fromState) !== '/' ? locationToPath(fromState) : directNext ?? '/';
+
   const [pending, setPending] = useState<'discord' | 'google' | 'email' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [email, setEmail] = useState('');
@@ -22,8 +38,7 @@ export function AuthLoginPage() {
   }
 
   if (session) {
-    const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? '/';
-    return <Navigate to={from} replace />;
+    return <Navigate to={next} replace />;
   }
 
   const handle = async (provider: 'discord' | 'google') => {
@@ -31,7 +46,7 @@ export function AuthLoginPage() {
     setPending(provider);
     try {
       const fn = provider === 'discord' ? signInWithDiscord : signInWithGoogle;
-      const { error } = await fn();
+      const { error } = await fn(next);
       if (error) {
         setError(error.message);
         setPending(null);
@@ -49,7 +64,7 @@ export function AuthLoginPage() {
     setError(null);
     setPending('email');
     try {
-      const { error } = await signInWithEmailMagicLink(email.trim());
+      const { error } = await signInWithEmailMagicLink(email.trim(), next);
       if (error) {
         setError(error.message);
       } else {
