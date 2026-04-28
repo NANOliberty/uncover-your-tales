@@ -79,14 +79,30 @@ export function CreateGroupPage() {
       toast.success(`"${group.name}" 그룹이 만들어졌어요`);
       navigate(`/g/${group.slug}`);
     } catch (err) {
-      const code = (err as { code?: string })?.code;
-      const msg = err instanceof Error ? err.message : '알 수 없는 오류';
-      if (code === '23505' || msg.includes('groups_slug_key')) {
+      // Supabase 에러는 Error instance 가 아니라 { message, code, details, hint } 객체.
+      // 진단을 위해 원본을 콘솔에도 찍어둔다.
+      // eslint-disable-next-line no-console
+      console.error('[create-group] failed:', err);
+      const e = (err ?? {}) as {
+        code?: string;
+        message?: string;
+        details?: string;
+        hint?: string;
+      };
+      const msg = e.message || (err instanceof Error ? err.message : '') || '알 수 없는 오류';
+      const detail = e.details ? ` (${e.details})` : '';
+
+      if (e.code === '23505' || msg.includes('groups_slug_key')) {
         setErrors({ slug: '이미 사용 중인 주소입니다' });
       } else if (msg.includes('groups_slug_check')) {
         setErrors({ slug: '주소 형식이 올바르지 않습니다' });
+      } else if (e.code === '42501' || msg.includes('row-level security')) {
+        toast.error(
+          '권한 문제로 생성에 실패했습니다. 로그인 세션을 확인해 주세요.',
+          { description: msg + detail },
+        );
       } else {
-        toast.error(`그룹 생성 실패: ${msg}`);
+        toast.error(`그룹 생성 실패: ${msg}`, { description: detail || undefined });
       }
     } finally {
       setSubmitting(false);
