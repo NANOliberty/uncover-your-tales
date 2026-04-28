@@ -74,7 +74,6 @@ export function CreateGroupPage() {
         name: name.trim(),
         slug: slug.trim(),
         description: description.trim() || null,
-        createdBy: user.id,
       });
       toast.success(`"${group.name}" 그룹이 만들어졌어요`);
       navigate(`/g/${group.slug}`);

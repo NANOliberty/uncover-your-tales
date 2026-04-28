@@ -71,7 +71,8 @@ export type Database = {
           description?: string | null;
           logo_url?: string | null;
           visibility?: Database['public']['Enums']['group_visibility'];
-          created_by: string;
+          // 0003 트리거가 auth.uid() 로 자동 세팅 — 클라이언트가 보내지 않는다.
+          created_by?: string;
           created_at?: string;
           updated_at?: string;
         };

@@ -7,12 +7,12 @@ interface CreateGroupInput {
   name: string;
   slug: string;
   description?: string | null;
-  createdBy: string;
 }
 
 /**
- * 그룹 생성. trigger 가 자동으로 생성자를 admin 으로 등록한다.
- * 슬러그 unique 제약 위반은 form 단에서 알아본 후 표시.
+ * 그룹 생성.
+ * - created_by 는 DB BEFORE INSERT 트리거가 auth.uid() 로 자동 세팅 (0003 마이그레이션)
+ * - 그룹 생성 후 group_members 에 admin 으로 자동 등록 (0001 의 handle_new_group)
  */
 export function useCreateGroup() {
   const qc = useQueryClient();
@@ -21,11 +21,11 @@ export function useCreateGroup() {
     mutationFn: async (input: CreateGroupInput): Promise<GroupRow> => {
       const { data, error } = await supabase
         .from('groups')
+        // created_by 를 명시적으로 보내지 않는다 — 트리거가 채운다.
         .insert({
           name: input.name,
           slug: input.slug,
           description: input.description ?? null,
-          created_by: input.createdBy,
         })
         .select('*')
         .single();
