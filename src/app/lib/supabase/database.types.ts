@@ -193,6 +193,14 @@ export type Database = {
         Args: Record<string, never>;
         Returns: string;
       };
+      create_group_rpc: {
+        Args: { p_name: string; p_slug: string; p_description?: string | null };
+        Returns: Database['public']['Tables']['groups']['Row'];
+      };
+      whoami: {
+        Args: Record<string, never>;
+        Returns: Json;
+      };
     };
     Enums: {
       group_role: 'admin' | 'member' | 'guest';

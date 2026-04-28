@@ -10,26 +10,26 @@ interface CreateGroupInput {
 }
 
 /**
- * 그룹 생성.
- * - created_by 는 DB BEFORE INSERT 트리거가 auth.uid() 로 자동 세팅 (0003 마이그레이션)
- * - 그룹 생성 후 group_members 에 admin 으로 자동 등록 (0001 의 handle_new_group)
+ * 그룹 생성 — SECURITY DEFINER RPC 사용.
+ *
+ * 직접 INSERT 는 RLS 정책 / 클라이언트 자칭 created_by / 새 키 시스템이 미묘하게
+ * 엮여 디버깅이 어려웠다. RPC 한 함수로 통일하면:
+ *  - 함수 안에서 auth.uid() 한 번만 읽어 created_by 로 사용
+ *  - SECURITY DEFINER 로 RLS 우회 (함수 자체에서 인증 체크)
+ *  - handle_new_group 트리거가 group_members 에 admin 으로 자동 등록
  */
 export function useCreateGroup() {
   const qc = useQueryClient();
 
   return useMutation({
     mutationFn: async (input: CreateGroupInput): Promise<GroupRow> => {
-      const { data, error } = await supabase
-        .from('groups')
-        // created_by 를 명시적으로 보내지 않는다 — 트리거가 채운다.
-        .insert({
-          name: input.name,
-          slug: input.slug,
-          description: input.description ?? null,
-        })
-        .select('*')
-        .single();
+      const { data, error } = await supabase.rpc('create_group_rpc', {
+        p_name: input.name,
+        p_slug: input.slug,
+        p_description: input.description ?? null,
+      });
       if (error) throw error;
+      if (!data) throw new Error('CREATE_GROUP_RETURNED_EMPTY');
       return data as GroupRow;
     },
     onSuccess: () => {
