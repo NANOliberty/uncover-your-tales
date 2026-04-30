@@ -370,13 +370,16 @@ export function CharacterEditPage() {
           <table className="w-full text-sm">
             <thead className="bg-muted/30 text-[10px] uppercase tracking-wider text-muted-foreground">
               <tr>
-                <Th w="20%">무기</Th>
-                <Th w="20%">기능</Th>
+                <Th w="16%">무기</Th>
+                <Th w="16%">기능</Th>
+                <Th w="6%">보통</Th>
+                <Th w="6%">어려움</Th>
+                <Th w="6%">대단함</Th>
                 <Th w="13%">피해</Th>
-                <Th w="10%">사거리</Th>
-                <Th w="10%">공격횟수</Th>
-                <Th w="9%">탄약</Th>
-                <Th w="10%">고장</Th>
+                <Th w="9%">사거리</Th>
+                <Th w="8%">공격횟수</Th>
+                <Th w="8%">탄약</Th>
+                <Th w="8%">고장</Th>
                 <th className="w-8" />
               </tr>
             </thead>
@@ -384,14 +387,19 @@ export function CharacterEditPage() {
               {weapons.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={8}
+                    colSpan={11}
                     className="px-3 py-4 text-center text-xs text-muted-foreground"
                   >
                     아직 등록된 무기가 없습니다.
                   </td>
                 </tr>
               ) : (
-                weapons.map((w, i) => (
+                weapons.map((w, i) => {
+                  const linked = w.skill
+                    ? skills.find((s) => s.name === w.skill)
+                    : undefined;
+                  const total = linked ? skillTotal(linked, characteristics) : null;
+                  return (
                   <tr key={i}>
                     <CellInput
                       placeholder="권총"
@@ -411,6 +419,9 @@ export function CharacterEditPage() {
                         )
                       }
                     />
+                    <ReadCell value={total != null ? total : '—'} />
+                    <ReadCell value={total != null ? Math.floor(total / 2) : '—'} />
+                    <ReadCell value={total != null ? Math.floor(total / 5) : '—'} />
                     <CellInput
                       placeholder="1d10"
                       value={w.damage ?? ''}
@@ -464,7 +475,8 @@ export function CharacterEditPage() {
                       onRemove={() => setWeapons((prev) => prev.filter((_, j) => j !== i))}
                     />
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -812,6 +824,15 @@ function CellInput({
         placeholder={placeholder}
         className="w-full bg-transparent px-3 py-1.5 text-sm outline-none placeholder:text-muted-foreground/60 focus:bg-accent/40"
       />
+    </td>
+  );
+}
+
+/** 자동 계산된 셀 (보통/어려움/대단함). 입력 불가, tabular. */
+function ReadCell({ value }: { value: number | string }) {
+  return (
+    <td className="bg-muted/20 px-2 py-1.5 text-center text-sm tabular-nums">
+      {value}
     </td>
   );
 }

@@ -268,6 +268,9 @@ function WeaponsSection({ data }: { data: CoCData }) {
             <tr>
               <th className="px-3 py-2 text-left">무기</th>
               <th className="px-3 py-2 text-left">기능</th>
+              <th className="px-3 py-2 text-center">보통</th>
+              <th className="px-3 py-2 text-center">어려움</th>
+              <th className="px-3 py-2 text-center">대단함</th>
               <th className="px-3 py-2 text-left">피해</th>
               <th className="px-3 py-2 text-left">사거리</th>
               <th className="px-3 py-2 text-left">공격횟수</th>
@@ -282,11 +285,15 @@ function WeaponsSection({ data }: { data: CoCData }) {
               return (
                 <tr key={i}>
                   <td className="px-3 py-2 font-medium">{w.name}</td>
-                  <td className="px-3 py-2 text-muted-foreground">
-                    {w.skill ?? '—'}
-                    {total != null && (
-                      <span className="ml-1 tabular-nums text-foreground">({total})</span>
-                    )}
+                  <td className="px-3 py-2 text-muted-foreground">{w.skill ?? '—'}</td>
+                  <td className="bg-muted/20 px-3 py-2 text-center text-sm font-semibold tabular-nums">
+                    {total ?? '—'}
+                  </td>
+                  <td className="bg-muted/20 px-3 py-2 text-center text-sm tabular-nums text-muted-foreground">
+                    {total != null ? Math.floor(total / 2) : '—'}
+                  </td>
+                  <td className="bg-muted/20 px-3 py-2 text-center text-sm tabular-nums text-muted-foreground">
+                    {total != null ? Math.floor(total / 5) : '—'}
                   </td>
                   <td className="px-3 py-2 tabular-nums">{w.damage ?? '—'}</td>
                   <td className="px-3 py-2 text-muted-foreground">{w.range ?? '—'}</td>
