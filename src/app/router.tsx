@@ -9,6 +9,7 @@ import { GroupSettingsPage } from './pages/GroupSettingsPage';
 import { CharactersPage } from './pages/CharactersPage';
 import { CharacterNewPage } from './pages/CharacterNewPage';
 import { CharacterDetailPage } from './pages/CharacterDetailPage';
+import { CharacterEditPage } from './pages/CharacterEditPage';
 import { ScenariosPage } from './pages/ScenariosPage';
 import { SessionsPage } from './pages/SessionsPage';
 import { RelationsPage } from './pages/RelationsPage';
@@ -39,6 +40,7 @@ export const router = createBrowserRouter([
               { path: 'characters', Component: CharactersPage },
               { path: 'characters/new', Component: CharacterNewPage },
               { path: 'characters/:characterId', Component: CharacterDetailPage },
+              { path: 'characters/:characterId/edit', Component: CharacterEditPage },
               { path: 'scenarios', Component: ScenariosPage },
               { path: 'sessions', Component: SessionsPage },
               { path: 'relations', Component: RelationsPage },

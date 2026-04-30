@@ -32,11 +32,16 @@ export interface CoCInfo {
 }
 
 export interface CoCSkill {
+  /** 표준 기술이면 카탈로그 key, custom 이면 name 그대로 또는 별도 식별자 */
+  key: string;
+  /** 표시명 (custom 추가 시 필요) */
   name: string;
-  /** 최종값 (직업+흥미+기본). 굴림에 그대로 사용. */
-  value: number;
-  /** 직업 기술인지 — 직업 포인트 분배 표시용 */
-  isOccupation?: boolean;
+  /** 직업 포인트로 더해진 양 */
+  occupation: number;
+  /** 흥미 포인트로 더해진 양 */
+  interest: number;
+  /** custom 기술 표시용 — 표준 카탈로그에 없을 때 true */
+  custom?: boolean;
 }
 
 export interface CoCWeapon {

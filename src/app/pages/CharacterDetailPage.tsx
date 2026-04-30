@@ -1,10 +1,17 @@
 import { Link, Navigate, useOutletContext, useParams } from 'react-router';
-import { ArrowLeft, User } from 'lucide-react';
+import { ArrowLeft, Pencil, User } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import type { GroupRow } from '../lib/supabase/database.types';
 import { useCharacter } from '../features/characters/api';
+import { useSession } from '../features/auth/useSession';
 import { COC_GRID_ORDER, COC_LABELS } from '../lib/coc/characteristics';
 import { calculateDerived, successTiers } from '../lib/coc/derived';
+import {
+  COC_SKILL_BY_KEY,
+  SKILL_CATEGORY_ORDER,
+  type SkillCategory,
+} from '../lib/coc/skills';
+import { skillTotal } from '../lib/coc/skill-calc';
 import type { CoCData } from '../lib/coc/types';
 
 interface GroupOutletContext {
@@ -21,6 +28,7 @@ export function CharacterDetailPage() {
   const { group } = useOutletContext<GroupOutletContext>();
   const { characterId } = useParams<{ characterId: string }>();
   const { data: character, isLoading, isError } = useCharacter(characterId);
+  const { user } = useSession();
 
   if (isLoading) {
     return (
@@ -37,19 +45,25 @@ export function CharacterDetailPage() {
   // CoC 7판이 아닌 경우는 향후 분기 — 지금은 CoC 만 사용 가능
   const data = (character.data ?? {}) as Partial<CoCData>;
   const isCoC = character.system === 'coc7';
+  const isOwner = user?.id === character.owner_id;
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-8">
       <header className="mb-6 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <Button asChild size="sm" variant="ghost">
-            <Link to=".." relative="path">
-              <ArrowLeft className="mr-1 h-4 w-4" />
-              목록
+        <Button asChild size="sm" variant="ghost">
+          <Link to=".." relative="path">
+            <ArrowLeft className="mr-1 h-4 w-4" />
+            목록
+          </Link>
+        </Button>
+        {isOwner && (
+          <Button asChild size="sm">
+            <Link to="edit">
+              <Pencil className="mr-1 h-3 w-3" />
+              편집
             </Link>
           </Button>
-        </div>
-        {/* M2.2 에서 편집 페이지 추가 후 노출 */}
+        )}
       </header>
 
       <section className="mb-8 flex items-start gap-4 rounded-lg border bg-card p-5">
@@ -138,6 +152,9 @@ function CoCSheet({ data }: { data: CoCData }) {
         </div>
       </section>
 
+      {/* 기술 */}
+      <SkillsSection data={data} />
+
       {/* 메모 */}
       {data.notes && (
         <section className="mb-6 rounded-lg border bg-card p-4">
@@ -147,10 +164,65 @@ function CoCSheet({ data }: { data: CoCData }) {
       )}
 
       <p className="mt-8 text-center text-xs text-muted-foreground">
-        기술·무기·주문·백스토리·일러스트는 다음 마일스톤(M2.2~M2.4) 에 추가됩니다.
-        코코포리아 채팅팔레트 export 는 M2.6.
+        무기·주문·백스토리·일러스트는 M2.3~M2.4. 코코포리아 채팅팔레트 export 는 M2.6.
       </p>
     </>
+  );
+}
+
+function SkillsSection({ data }: { data: CoCData }) {
+  // 분배가 0/0 인 표준 기술도 표시할지 결정 — 일단 분배가 있는 것 + 능력치 파생만.
+  const meaningful = (data.skills ?? []).filter((s) => {
+    if (s.occupation > 0 || s.interest > 0) return true;
+    const def = COC_SKILL_BY_KEY.get(s.key);
+    return !!def?.derives;
+  });
+
+  if (meaningful.length === 0) return null;
+
+  // 카테고리별 그룹핑
+  const groups = SKILL_CATEGORY_ORDER.flatMap((cat) => {
+    const items = meaningful.filter((s) => {
+      const def = COC_SKILL_BY_KEY.get(s.key);
+      const c = (def?.category ?? 'custom') as SkillCategory;
+      return c === cat;
+    });
+    return items.length > 0 ? [{ category: cat, items }] : [];
+  });
+
+  return (
+    <section className="mb-6">
+      <h2 className="mb-3 text-sm font-medium text-muted-foreground">기술</h2>
+      <div className="space-y-3">
+        {groups.map(({ category, items }) => (
+          <div key={category} className="rounded-md border bg-card">
+            <div className="border-b px-3 py-2 text-xs font-medium text-muted-foreground">
+              {category}
+            </div>
+            <ul className="divide-y">
+              {items.map((s) => {
+                const total = skillTotal(s, data.characteristics);
+                const hard = Math.floor(total / 2);
+                const extreme = Math.floor(total / 5);
+                return (
+                  <li
+                    key={s.key}
+                    className="flex items-center justify-between gap-3 px-3 py-2 text-sm"
+                  >
+                    <span>{s.name}</span>
+                    <span className="tabular-nums text-muted-foreground">
+                      <span className="font-medium text-foreground">{total}</span>
+                      <span className="ml-2 text-xs">/ {hard}</span>
+                      <span className="ml-1 text-xs">/ {extreme}</span>
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
