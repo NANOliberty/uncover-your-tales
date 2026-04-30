@@ -52,7 +52,7 @@ export function AppShell() {
       </main>
 
       <footer className="border-t py-6 text-center text-xs text-muted-foreground">
-        Uncover Your Tales · 친구 그룹 폐쇄 운영 · v0.0.0 (M2.2)
+        Uncover Your Tales · 친구 그룹 폐쇄 운영 · v0.0.0 (M2.3)
       </footer>
     </div>
   );

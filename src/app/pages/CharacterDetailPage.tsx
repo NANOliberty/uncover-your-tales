@@ -155,6 +155,15 @@ function CoCSheet({ data }: { data: CoCData }) {
       {/* 기술 */}
       <SkillsSection data={data} />
 
+      {/* 무기 */}
+      <WeaponsSection data={data} />
+
+      {/* 주문 */}
+      <SpellsSection data={data} />
+
+      {/* 인벤 */}
+      <InventorySection data={data} />
+
       {/* 메모 */}
       {data.notes && (
         <section className="mb-6 rounded-lg border bg-card p-4">
@@ -164,9 +173,110 @@ function CoCSheet({ data }: { data: CoCData }) {
       )}
 
       <p className="mt-8 text-center text-xs text-muted-foreground">
-        무기·주문·백스토리·일러스트는 M2.3~M2.4. 코코포리아 채팅팔레트 export 는 M2.6.
+        백스토리·일러스트는 M2.4. 코코포리아 채팅팔레트 export 는 M2.6.
       </p>
     </>
+  );
+}
+
+function WeaponsSection({ data }: { data: CoCData }) {
+  const weapons = data.weapons ?? [];
+  if (weapons.length === 0) return null;
+
+  // 사용 기술이 표준 카탈로그에 있으면 합계 표시
+  const skillByName = new Map(data.skills.map((s) => [s.name, s]));
+
+  return (
+    <section className="mb-6">
+      <h2 className="mb-3 text-sm font-medium text-muted-foreground">무기</h2>
+      <div className="overflow-hidden rounded-md border bg-card">
+        <table className="w-full text-sm">
+          <thead className="bg-muted/40 text-xs text-muted-foreground">
+            <tr>
+              <th className="px-3 py-2 text-left">이름</th>
+              <th className="px-3 py-2 text-left">기술</th>
+              <th className="px-3 py-2 text-left">데미지</th>
+              <th className="px-3 py-2 text-left">사거리</th>
+              <th className="px-3 py-2 text-left">공격</th>
+              <th className="px-3 py-2 text-left">탄창</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {weapons.map((w, i) => {
+              const skill = w.skill ? skillByName.get(w.skill) : undefined;
+              const total = skill ? skillTotal(skill, data.characteristics) : null;
+              return (
+                <tr key={i}>
+                  <td className="px-3 py-2 font-medium">{w.name}</td>
+                  <td className="px-3 py-2 text-muted-foreground">
+                    {w.skill ?? '—'}
+                    {total != null && (
+                      <span className="ml-1 tabular-nums text-foreground">({total})</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2 tabular-nums">{w.damage ?? '—'}</td>
+                  <td className="px-3 py-2 text-muted-foreground">{w.range ?? '—'}</td>
+                  <td className="px-3 py-2 text-muted-foreground">{w.attacks ?? '—'}</td>
+                  <td className="px-3 py-2 text-muted-foreground">{w.ammo ?? '—'}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function SpellsSection({ data }: { data: CoCData }) {
+  const spells = data.spells ?? [];
+  if (spells.length === 0) return null;
+
+  return (
+    <section className="mb-6">
+      <h2 className="mb-3 text-sm font-medium text-muted-foreground">주문 / 마법</h2>
+      <ul className="space-y-2">
+        {spells.map((s, i) => (
+          <li key={i} className="rounded-md border bg-card p-3">
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="font-medium">{s.name}</span>
+              {s.cost && (
+                <span className="text-xs text-muted-foreground">{s.cost}</span>
+              )}
+            </div>
+            {s.effect && (
+              <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">
+                {s.effect}
+              </p>
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function InventorySection({ data }: { data: CoCData }) {
+  const inventory = data.inventory ?? [];
+  if (inventory.length === 0) return null;
+
+  return (
+    <section className="mb-6">
+      <h2 className="mb-3 text-sm font-medium text-muted-foreground">소지품</h2>
+      <ul className="divide-y rounded-md border bg-card">
+        {inventory.map((it, i) => (
+          <li key={i} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+            <span className="flex-1">
+              {it.name}
+              {it.qty && it.qty > 1 && (
+                <span className="ml-1 text-xs text-muted-foreground">×{it.qty}</span>
+              )}
+            </span>
+            {it.notes && <span className="text-xs text-muted-foreground">{it.notes}</span>}
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

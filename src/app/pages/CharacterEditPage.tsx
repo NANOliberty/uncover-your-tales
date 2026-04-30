@@ -24,7 +24,10 @@ import {
   type CoCCharacteristic,
   type CoCCharacteristics,
   type CoCData,
+  type CoCInventoryItem,
   type CoCSkill,
+  type CoCSpell,
+  type CoCWeapon,
 } from '../lib/coc/types';
 
 interface GroupOutletContext {
@@ -50,6 +53,9 @@ export function CharacterEditPage() {
     emptyCoCData().characteristics,
   );
   const [skills, setSkills] = useState<CoCSkill[]>([]);
+  const [weapons, setWeapons] = useState<CoCWeapon[]>([]);
+  const [spells, setSpells] = useState<CoCSpell[]>([]);
+  const [inventory, setInventory] = useState<CoCInventoryItem[]>([]);
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -81,6 +87,9 @@ export function CharacterEditPage() {
       }
     }
     setSkills(merged);
+    setWeapons(data.weapons ?? []);
+    setSpells(data.spells ?? []);
+    setInventory(data.inventory ?? []);
     setNotes(data.notes ?? '');
   }, [character]);
 
@@ -129,6 +138,11 @@ export function CharacterEditPage() {
       // 0 인 항목도 저장 (표준 기술 표시 일관성 위해). custom 은 0/0 이면 제거.
       const compactedSkills = skills.filter((s) => !(s.custom && !s.occupation && !s.interest));
 
+      // 무기·주문·인벤은 이름이 비어있으면 제거 — 사용자가 행만 추가해놓고 저장하는 경우.
+      const cleanWeapons = weapons.filter((w) => w.name?.trim());
+      const cleanSpells = spells.filter((s) => s.name?.trim());
+      const cleanInventory = inventory.filter((i) => i.name?.trim());
+
       const data: CoCData = {
         v: 1,
         info: {
@@ -139,9 +153,9 @@ export function CharacterEditPage() {
         },
         characteristics,
         skills: compactedSkills,
-        weapons: [],
-        spells: [],
-        inventory: [],
+        weapons: cleanWeapons,
+        spells: cleanSpells,
+        inventory: cleanInventory,
         backstory: {},
         notes,
       };
@@ -344,6 +358,230 @@ export function CharacterEditPage() {
               </div>
             ))}
           </div>
+        </section>
+
+        {/* 무기 */}
+        <section>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-medium">무기</h2>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() =>
+                setWeapons((prev) => [
+                  ...prev,
+                  { name: '', skill: '', damage: '', range: '', attacks: '', ammo: null, malfunction: null },
+                ])
+              }
+            >
+              <Plus className="mr-1 h-3 w-3" />무기 추가
+            </Button>
+          </div>
+          {weapons.length === 0 ? (
+            <p className="rounded-md border border-dashed bg-card px-3 py-3 text-center text-xs text-muted-foreground">
+              아직 등록된 무기가 없습니다.
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {weapons.map((w, i) => (
+                <li key={i} className="rounded-md border bg-card p-3">
+                  <div className="grid gap-2 sm:grid-cols-12">
+                    <input
+                      placeholder="이름 (예: 권총)"
+                      value={w.name}
+                      onChange={(e) =>
+                        setWeapons((prev) => prev.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))
+                      }
+                      className="sm:col-span-3 rounded-md border bg-input-background px-2 py-1.5 text-sm outline-none focus:border-ring"
+                    />
+                    <input
+                      placeholder="기술 (예: 사격(권총))"
+                      value={w.skill ?? ''}
+                      onChange={(e) =>
+                        setWeapons((prev) => prev.map((x, j) => (j === i ? { ...x, skill: e.target.value } : x)))
+                      }
+                      className="sm:col-span-3 rounded-md border bg-input-background px-2 py-1.5 text-sm outline-none focus:border-ring"
+                    />
+                    <input
+                      placeholder="데미지 (1d6+DB)"
+                      value={w.damage ?? ''}
+                      onChange={(e) =>
+                        setWeapons((prev) => prev.map((x, j) => (j === i ? { ...x, damage: e.target.value } : x)))
+                      }
+                      className="sm:col-span-2 rounded-md border bg-input-background px-2 py-1.5 text-sm outline-none focus:border-ring"
+                    />
+                    <input
+                      placeholder="사거리"
+                      value={w.range ?? ''}
+                      onChange={(e) =>
+                        setWeapons((prev) => prev.map((x, j) => (j === i ? { ...x, range: e.target.value } : x)))
+                      }
+                      className="sm:col-span-1 rounded-md border bg-input-background px-2 py-1.5 text-sm outline-none focus:border-ring"
+                    />
+                    <input
+                      placeholder="공격"
+                      value={w.attacks ?? ''}
+                      onChange={(e) =>
+                        setWeapons((prev) => prev.map((x, j) => (j === i ? { ...x, attacks: e.target.value } : x)))
+                      }
+                      className="sm:col-span-1 rounded-md border bg-input-background px-2 py-1.5 text-sm outline-none focus:border-ring"
+                    />
+                    <input
+                      placeholder="탄창"
+                      value={w.ammo ?? ''}
+                      onChange={(e) =>
+                        setWeapons((prev) =>
+                          prev.map((x, j) => (j === i ? { ...x, ammo: e.target.value || null } : x)),
+                        )
+                      }
+                      className="sm:col-span-1 rounded-md border bg-input-background px-2 py-1.5 text-sm outline-none focus:border-ring"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setWeapons((prev) => prev.filter((_, j) => j !== i))}
+                      className="sm:col-span-1 flex items-center justify-center rounded-md text-muted-foreground hover:text-destructive"
+                      aria-label="삭제"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {/* 주문 */}
+        <section>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-medium">주문 / 마법</h2>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => setSpells((prev) => [...prev, { name: '', cost: '', effect: '' }])}
+            >
+              <Plus className="mr-1 h-3 w-3" />주문 추가
+            </Button>
+          </div>
+          {spells.length === 0 ? (
+            <p className="rounded-md border border-dashed bg-card px-3 py-3 text-center text-xs text-muted-foreground">
+              주문이 필요한 캐릭터만 채우세요.
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {spells.map((s, i) => (
+                <li key={i} className="rounded-md border bg-card p-3">
+                  <div className="grid gap-2 sm:grid-cols-12">
+                    <input
+                      placeholder="이름"
+                      value={s.name}
+                      onChange={(e) =>
+                        setSpells((prev) => prev.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))
+                      }
+                      className="sm:col-span-3 rounded-md border bg-input-background px-2 py-1.5 text-sm outline-none focus:border-ring"
+                    />
+                    <input
+                      placeholder="비용 (5 MP, 1d6 SAN)"
+                      value={s.cost ?? ''}
+                      onChange={(e) =>
+                        setSpells((prev) => prev.map((x, j) => (j === i ? { ...x, cost: e.target.value } : x)))
+                      }
+                      className="sm:col-span-3 rounded-md border bg-input-background px-2 py-1.5 text-sm outline-none focus:border-ring"
+                    />
+                    <input
+                      placeholder="효과"
+                      value={s.effect ?? ''}
+                      onChange={(e) =>
+                        setSpells((prev) => prev.map((x, j) => (j === i ? { ...x, effect: e.target.value } : x)))
+                      }
+                      className="sm:col-span-5 rounded-md border bg-input-background px-2 py-1.5 text-sm outline-none focus:border-ring"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setSpells((prev) => prev.filter((_, j) => j !== i))}
+                      className="sm:col-span-1 flex items-center justify-center rounded-md text-muted-foreground hover:text-destructive"
+                      aria-label="삭제"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {/* 인벤토리 */}
+        <section>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-medium">소지품</h2>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => setInventory((prev) => [...prev, { name: '', qty: 1, notes: '' }])}
+            >
+              <Plus className="mr-1 h-3 w-3" />항목 추가
+            </Button>
+          </div>
+          {inventory.length === 0 ? (
+            <p className="rounded-md border border-dashed bg-card px-3 py-3 text-center text-xs text-muted-foreground">
+              아직 비어있습니다.
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {inventory.map((it, i) => (
+                <li key={i} className="rounded-md border bg-card p-3">
+                  <div className="grid gap-2 sm:grid-cols-12">
+                    <input
+                      placeholder="이름"
+                      value={it.name}
+                      onChange={(e) =>
+                        setInventory((prev) =>
+                          prev.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)),
+                        )
+                      }
+                      className="sm:col-span-5 rounded-md border bg-input-background px-2 py-1.5 text-sm outline-none focus:border-ring"
+                    />
+                    <input
+                      type="number"
+                      min={1}
+                      placeholder="수량"
+                      value={it.qty ?? 1}
+                      onChange={(e) =>
+                        setInventory((prev) =>
+                          prev.map((x, j) =>
+                            j === i ? { ...x, qty: Math.max(1, Number(e.target.value) || 1) } : x,
+                          ),
+                        )
+                      }
+                      className="sm:col-span-2 rounded-md border bg-input-background px-2 py-1.5 text-sm tabular-nums outline-none focus:border-ring"
+                    />
+                    <input
+                      placeholder="메모"
+                      value={it.notes ?? ''}
+                      onChange={(e) =>
+                        setInventory((prev) =>
+                          prev.map((x, j) => (j === i ? { ...x, notes: e.target.value } : x)),
+                        )
+                      }
+                      className="sm:col-span-4 rounded-md border bg-input-background px-2 py-1.5 text-sm outline-none focus:border-ring"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setInventory((prev) => prev.filter((_, j) => j !== i))}
+                      className="sm:col-span-1 flex items-center justify-center rounded-md text-muted-foreground hover:text-destructive"
+                      aria-label="삭제"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
 
         {/* 메모 */}
