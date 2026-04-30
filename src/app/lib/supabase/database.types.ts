@@ -120,8 +120,7 @@ export type Database = {
           },
         ];
       };
-      group_invitations: {
-        Row: {
+      group_invitations: {        Row: {
           id: string;
           group_id: string;
           code: string;
@@ -166,6 +165,55 @@ export type Database = {
           },
         ];
       };
+      characters: {
+        Row: {
+          id: string;
+          group_id: string;
+          owner_id: string;
+          system: Database['public']['Enums']['trpg_system'];
+          name: string;
+          occupation: string | null;
+          status: Database['public']['Enums']['character_status'];
+          portrait_url: string | null;
+          data: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          group_id: string;
+          owner_id?: string;
+          system: Database['public']['Enums']['trpg_system'];
+          name: string;
+          occupation?: string | null;
+          status?: Database['public']['Enums']['character_status'];
+          portrait_url?: string | null;
+          data?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          group_id?: string;
+          owner_id?: string;
+          system?: Database['public']['Enums']['trpg_system'];
+          name?: string;
+          occupation?: string | null;
+          status?: Database['public']['Enums']['character_status'];
+          portrait_url?: string | null;
+          data?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'characters_group_id_fkey';
+            columns: ['group_id'];
+            referencedRelation: 'groups';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -204,10 +252,22 @@ export type Database = {
         Args: Record<string, never>;
         Returns: Json;
       };
+      create_character_rpc: {
+        Args: {
+          p_group_id: string;
+          p_system: Database['public']['Enums']['trpg_system'];
+          p_name: string;
+          p_occupation?: string | null;
+          p_data?: Json;
+        };
+        Returns: Database['public']['Tables']['characters']['Row'];
+      };
     };
     Enums: {
       group_role: 'admin' | 'member' | 'guest';
       group_visibility: 'private' | 'invite_only' | 'public';
+      trpg_system: 'coc7' | 'dnd5e' | 'dungeon_world' | 'fiasco' | 'insane' | 'shahonkok' | 'custom';
+      character_status: 'active' | 'retired' | 'dead';
     };
     CompositeTypes: Record<string, never>;
   };
@@ -218,5 +278,8 @@ export type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 export type GroupRow = Database['public']['Tables']['groups']['Row'];
 export type GroupMemberRow = Database['public']['Tables']['group_members']['Row'];
 export type GroupInvitationRow = Database['public']['Tables']['group_invitations']['Row'];
+export type CharacterRow = Database['public']['Tables']['characters']['Row'];
 export type GroupRole = Database['public']['Enums']['group_role'];
 export type GroupVisibility = Database['public']['Enums']['group_visibility'];
+export type TrpgSystem = Database['public']['Enums']['trpg_system'];
+export type CharacterStatus = Database['public']['Enums']['character_status'];

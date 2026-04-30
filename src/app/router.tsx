@@ -7,6 +7,8 @@ import { CreateGroupPage } from './pages/CreateGroupPage';
 import { JoinGroupPage } from './pages/JoinGroupPage';
 import { GroupSettingsPage } from './pages/GroupSettingsPage';
 import { CharactersPage } from './pages/CharactersPage';
+import { CharacterNewPage } from './pages/CharacterNewPage';
+import { CharacterDetailPage } from './pages/CharacterDetailPage';
 import { ScenariosPage } from './pages/ScenariosPage';
 import { SessionsPage } from './pages/SessionsPage';
 import { RelationsPage } from './pages/RelationsPage';
@@ -35,6 +37,8 @@ export const router = createBrowserRouter([
             children: [
               { index: true, Component: CharactersPage },
               { path: 'characters', Component: CharactersPage },
+              { path: 'characters/new', Component: CharacterNewPage },
+              { path: 'characters/:characterId', Component: CharacterDetailPage },
               { path: 'scenarios', Component: ScenariosPage },
               { path: 'sessions', Component: SessionsPage },
               { path: 'relations', Component: RelationsPage },
