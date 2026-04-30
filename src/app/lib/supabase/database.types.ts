@@ -286,6 +286,104 @@ export type Database = {
           },
         ];
       };
+      session_runs: {
+        Row: {
+          id: string;
+          group_id: string | null;
+          scenario_id: string | null;
+          title: string;
+          status: Database['public']['Enums']['session_status'];
+          scheduled_at: string | null;
+          started_at: string | null;
+          ended_at: string | null;
+          notes: string | null;
+          data: Json;
+          created_by: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          group_id?: string | null;
+          scenario_id?: string | null;
+          title: string;
+          status?: Database['public']['Enums']['session_status'];
+          scheduled_at?: string | null;
+          started_at?: string | null;
+          ended_at?: string | null;
+          notes?: string | null;
+          data?: Json;
+          created_by: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          group_id?: string | null;
+          scenario_id?: string | null;
+          title?: string;
+          status?: Database['public']['Enums']['session_status'];
+          scheduled_at?: string | null;
+          started_at?: string | null;
+          ended_at?: string | null;
+          notes?: string | null;
+          data?: Json;
+          created_by?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'session_runs_group_id_fkey';
+            columns: ['group_id'];
+            referencedRelation: 'groups';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'session_runs_scenario_id_fkey';
+            columns: ['scenario_id'];
+            referencedRelation: 'scenarios';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      session_participants: {
+        Row: {
+          session_run_id: string;
+          user_id: string;
+          role: Database['public']['Enums']['session_role'];
+          character_id: string | null;
+          joined_at: string;
+        };
+        Insert: {
+          session_run_id: string;
+          user_id: string;
+          role?: Database['public']['Enums']['session_role'];
+          character_id?: string | null;
+          joined_at?: string;
+        };
+        Update: {
+          session_run_id?: string;
+          user_id?: string;
+          role?: Database['public']['Enums']['session_role'];
+          character_id?: string | null;
+          joined_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'session_participants_session_run_id_fkey';
+            columns: ['session_run_id'];
+            referencedRelation: 'session_runs';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'session_participants_character_id_fkey';
+            columns: ['character_id'];
+            referencedRelation: 'characters';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -353,12 +451,31 @@ export type Database = {
         };
         Returns: Database['public']['Tables']['scenarios']['Row'];
       };
+      create_session_run_rpc: {
+        Args: {
+          p_group_id: string | null;
+          p_scenario_id?: string | null;
+          p_title?: string | null;
+          p_scheduled_at?: string | null;
+        };
+        Returns: Database['public']['Tables']['session_runs']['Row'];
+      };
+      can_see_session_run: {
+        Args: { p_session_run_id: string };
+        Returns: boolean;
+      };
+      is_session_creator: {
+        Args: { p_session_run_id: string };
+        Returns: boolean;
+      };
     };
     Enums: {
       group_role: 'admin' | 'member' | 'guest';
       group_visibility: 'private' | 'invite_only' | 'public';
       trpg_system: 'coc7' | 'dnd5e' | 'dungeon_world' | 'fiasco' | 'insane' | 'shahonkok' | 'custom';
       character_status: 'active' | 'retired' | 'dead';
+      session_status: 'planned' | 'in_progress' | 'completed' | 'cancelled';
+      session_role: 'gm' | 'player' | 'guest';
     };
     CompositeTypes: Record<string, never>;
   };
@@ -371,6 +488,10 @@ export type GroupMemberRow = Database['public']['Tables']['group_members']['Row'
 export type GroupInvitationRow = Database['public']['Tables']['group_invitations']['Row'];
 export type CharacterRow = Database['public']['Tables']['characters']['Row'];
 export type ScenarioRow = Database['public']['Tables']['scenarios']['Row'];
+export type SessionRunRow = Database['public']['Tables']['session_runs']['Row'];
+export type SessionParticipantRow = Database['public']['Tables']['session_participants']['Row'];
+export type SessionStatus = Database['public']['Enums']['session_status'];
+export type SessionRole = Database['public']['Enums']['session_role'];
 export type GroupRole = Database['public']['Enums']['group_role'];
 export type GroupVisibility = Database['public']['Enums']['group_visibility'];
 export type TrpgSystem = Database['public']['Enums']['trpg_system'];

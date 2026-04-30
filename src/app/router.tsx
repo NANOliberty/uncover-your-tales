@@ -15,6 +15,8 @@ import { ScenarioNewPage } from './pages/ScenarioNewPage';
 import { ScenarioDetailPage } from './pages/ScenarioDetailPage';
 import { ScenarioEditPage } from './pages/ScenarioEditPage';
 import { SessionsPage } from './pages/SessionsPage';
+import { SessionNewPage } from './pages/SessionNewPage';
+import { SessionDetailPage } from './pages/SessionDetailPage';
 import { RelationsPage } from './pages/RelationsPage';
 import { RecruitmentPage } from './pages/RecruitmentPage';
 import { AuthLoginPage } from './pages/AuthLoginPage';
@@ -54,6 +56,8 @@ export const router = createBrowserRouter([
               { path: 'scenarios/:scenarioId', Component: ScenarioDetailPage },
               { path: 'scenarios/:scenarioId/edit', Component: ScenarioEditPage },
               { path: 'sessions', Component: SessionsPage },
+              { path: 'sessions/new', Component: SessionNewPage },
+              { path: 'sessions/:sessionId', Component: SessionDetailPage },
               { path: 'relations', Component: RelationsPage },
               { path: 'recruitment', Component: RecruitmentPage },
               { path: 'settings', Component: GroupSettingsPage },
