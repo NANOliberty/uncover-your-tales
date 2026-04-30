@@ -127,6 +127,13 @@ export interface CoCData {
   inventory: CoCInventoryItem[];
   backstory: CoCBackstory;
   status?: CoCStatus;
+  /**
+   * 세션 중 변동 트래커. null/undefined 면 만피로 간주.
+   * 감소하면 그 시점의 값을 저장. '전체 회복' 시 다시 null.
+   */
+  currentHp?: number | null;
+  currentMp?: number | null;
+  currentSan?: number | null;
   notes: string;
 }
 

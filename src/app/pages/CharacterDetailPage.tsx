@@ -1,8 +1,11 @@
+import { useEffect, useState } from 'react';
 import { Link, Navigate, useOutletContext, useParams } from 'react-router';
-import { ArrowLeft, Pencil, User } from 'lucide-react';
+import { ArrowLeft, Minus, Pencil, Plus, User } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '../components/ui/button';
-import type { GroupRow } from '../lib/supabase/database.types';
+import type { CharacterRow, GroupRow } from '../lib/supabase/database.types';
 import { useCharacter } from '../features/characters/api';
+import { useUpdateCharacter } from '../features/characters/mutations';
 import { useSession } from '../features/auth/useSession';
 import { COC_GRID_ORDER, COC_LABELS } from '../lib/coc/characteristics';
 import { calculateDerived, calculateWealth, maxSanity } from '../lib/coc/derived';
@@ -106,24 +109,56 @@ export function CharacterDetailPage() {
             <Badge>{character.system === 'coc7' ? 'CoC 7판' : character.system}</Badge>
             <Badge>{STATUS_LABEL[character.status] ?? character.status}</Badge>
             {group.is_solo && <Badge accent>내 작업실</Badge>}
-            {data.status?.temporaryInsanity && <Badge danger>일시적 광기</Badge>}
-            {data.status?.indefiniteInsanity && <Badge danger>장기적 광기</Badge>}
-            {data.status?.majorWound && <Badge danger>중상</Badge>}
-            {data.status?.dying && <Badge danger>빈사</Badge>}
           </div>
         </div>
       </header>
 
-      {isCoC && data.characteristics && <CoCSheet data={data as CoCData} />}
+      {isCoC && data.characteristics && (
+        <CoCSheet character={character} data={data as CoCData} isOwner={isOwner} />
+      )}
     </div>
   );
 }
 
-function CoCSheet({ data }: { data: CoCData }) {
+function CoCSheet({
+  character,
+  data,
+  isOwner,
+}: {
+  character: CharacterRow;
+  data: CoCData;
+  isOwner: boolean;
+}) {
   const derived = calculateDerived(data.characteristics, data.info?.age ?? null);
   const mythos = data.skills.find((s) => s.key === 'cthulhu_mythos');
   const mythosTotal = mythos ? skillTotal(mythos, data.characteristics) : 0;
   const sanCap = maxSanity(mythosTotal);
+
+  // 인라인 트래커용 patch helper.
+  const update = useUpdateCharacter();
+  const patchData = async (partial: Partial<CoCData>) => {
+    const next: CoCData = { ...data, ...partial };
+    try {
+      await update.mutateAsync({
+        id: character.id,
+        patch: { data: next as unknown as Record<string, unknown> },
+      });
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('[inline-update] failed:', e);
+      toast.error('저장 실패 — 다시 시도해 주세요');
+    }
+  };
+
+  const currentHp = data.currentHp ?? derived.hp;
+  const currentMp = data.currentMp ?? derived.mp;
+  const currentSan = data.currentSan ?? Math.min(derived.san, sanCap);
+
+  const fullRecover = () =>
+    patchData({ currentHp: null, currentMp: null, currentSan: null });
+
+  const toggleStatus = (k: keyof NonNullable<CoCData['status']>) => () =>
+    patchData({ status: { ...(data.status ?? {}), [k]: !data.status?.[k] } });
 
   return (
     <>
@@ -149,13 +184,74 @@ function CoCSheet({ data }: { data: CoCData }) {
         </div>
       </section>
 
-      {/* 자동 계산 — 풀 폭 banner */}
+      {/* 현재 상태 — HP/MP/SAN 인라인 편집 + 상태 토글 */}
       <section className="mb-6 rounded-lg border bg-card p-5">
-        <h2 className="mb-3 text-sm font-medium text-muted-foreground">자동 계산</h2>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:grid-cols-8">
-          <Stat label="체력" value={derived.hp} />
-          <Stat label="마력" value={derived.mp} />
-          <Stat label="이성" value={`${derived.san} / ${sanCap}`} hint="초기/최대" />
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-medium text-muted-foreground">현재 상태</h2>
+          {isOwner && (
+            <Button type="button" size="sm" variant="ghost" onClick={fullRecover}>
+              전체 회복
+            </Button>
+          )}
+        </div>
+        <div className="grid gap-3 lg:grid-cols-2">
+          <div className="grid grid-cols-3 gap-2">
+            <Tracker
+              label="체력"
+              current={currentHp}
+              max={derived.hp}
+              disabled={!isOwner}
+              onChange={(v) => patchData({ currentHp: v >= derived.hp ? null : v })}
+            />
+            <Tracker
+              label="마력"
+              current={currentMp}
+              max={derived.mp}
+              disabled={!isOwner}
+              onChange={(v) => patchData({ currentMp: v >= derived.mp ? null : v })}
+            />
+            <Tracker
+              label="이성"
+              current={currentSan}
+              max={sanCap}
+              hint={`초기 ${derived.san}`}
+              disabled={!isOwner}
+              onChange={(v) => patchData({ currentSan: v >= sanCap ? null : v })}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <ClickableStatus
+              label="일시적 광기"
+              active={!!data.status?.temporaryInsanity}
+              disabled={!isOwner}
+              onToggle={toggleStatus('temporaryInsanity')}
+            />
+            <ClickableStatus
+              label="장기적 광기"
+              active={!!data.status?.indefiniteInsanity}
+              disabled={!isOwner}
+              onToggle={toggleStatus('indefiniteInsanity')}
+            />
+            <ClickableStatus
+              label="중상"
+              active={!!data.status?.majorWound}
+              disabled={!isOwner}
+              onToggle={toggleStatus('majorWound')}
+            />
+            <ClickableStatus
+              label="빈사"
+              active={!!data.status?.dying}
+              disabled={!isOwner}
+              onToggle={toggleStatus('dying')}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* 파생 — 변하지 않는 5개 (회피·모국어·DB·체구·이동력) */}
+      <section className="mb-6 rounded-lg border bg-card p-5">
+        <h2 className="mb-3 text-sm font-medium text-muted-foreground">파생</h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
           <Stat label="회피" value={derived.dodge} />
           <Stat label="모국어" value={derived.ownLanguage} />
           <Stat label="피해 보너스" value={derived.damageBonus} />
@@ -426,6 +522,134 @@ function Stat({
       <span className="text-lg font-semibold tabular-nums">{value}</span>
       {hint && <span className="text-[10px] text-muted-foreground">{hint}</span>}
     </div>
+  );
+}
+
+/**
+ * 인라인 +/- 트래커. 직접 클릭하면 입력 모드, blur/Enter 로 저장.
+ * disabled 면 read-only.
+ */
+function Tracker({
+  label,
+  current,
+  max,
+  hint,
+  disabled,
+  onChange,
+}: {
+  label: string;
+  current: number;
+  max: number;
+  hint?: string;
+  disabled?: boolean;
+  onChange: (v: number) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(current);
+  useEffect(() => {
+    if (!editing) setDraft(current);
+  }, [current, editing]);
+
+  const clamp = (n: number) => Math.max(0, Math.min(max, Math.floor(n) || 0));
+  const decrement = () => onChange(clamp(current - 1));
+  const increment = () => onChange(clamp(current + 1));
+
+  return (
+    <div className="flex flex-col rounded-md border bg-background px-3 py-2 leading-tight">
+      <div className="flex items-baseline justify-between">
+        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          {label}
+        </span>
+        {hint && (
+          <span className="text-[9px] text-muted-foreground">{hint}</span>
+        )}
+      </div>
+      <div className="mt-0.5 flex items-center gap-1">
+        <button
+          type="button"
+          onClick={decrement}
+          disabled={disabled || current <= 0}
+          className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-accent disabled:opacity-30"
+          aria-label="감소"
+        >
+          <Minus className="h-3 w-3" />
+        </button>
+        {editing ? (
+          <input
+            type="number"
+            min={0}
+            max={max}
+            value={draft}
+            onChange={(e) => setDraft(clamp(Number(e.target.value)))}
+            onBlur={() => {
+              setEditing(false);
+              if (draft !== current) onChange(draft);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur();
+              if (e.key === 'Escape') {
+                setDraft(current);
+                setEditing(false);
+              }
+            }}
+            autoFocus
+            className="w-12 bg-transparent text-center text-xl font-semibold tabular-nums outline-none"
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => !disabled && setEditing(true)}
+            disabled={disabled}
+            className="flex-1 text-center text-xl font-semibold tabular-nums hover:text-primary disabled:hover:text-foreground"
+            title={disabled ? '' : '클릭해 직접 입력'}
+          >
+            {current}
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={increment}
+          disabled={disabled || current >= max}
+          className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-accent disabled:opacity-30"
+          aria-label="증가"
+        >
+          <Plus className="h-3 w-3" />
+        </button>
+      </div>
+      <p className="text-center text-[10px] text-muted-foreground tabular-nums">/ {max}</p>
+    </div>
+  );
+}
+
+/** 클릭으로 토글되는 상태 칩. 활성이면 destructive 색상. */
+function ClickableStatus({
+  label,
+  active,
+  disabled,
+  onToggle,
+}: {
+  label: string;
+  active: boolean;
+  disabled?: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      disabled={disabled}
+      className={[
+        'rounded-md border px-3 py-2 text-sm transition',
+        active
+          ? 'border-destructive/50 bg-destructive/10 font-medium text-destructive'
+          : 'bg-background text-muted-foreground hover:bg-accent/40',
+        disabled && 'cursor-not-allowed opacity-60',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      {label}
+    </button>
   );
 }
 
