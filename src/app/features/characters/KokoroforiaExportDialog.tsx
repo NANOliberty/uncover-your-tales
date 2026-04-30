@@ -73,7 +73,7 @@ export function KokoroforiaExportDialog({ characterName, data, trigger }: Props)
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="flex max-h-[85vh] max-w-3xl flex-col">
         <DialogHeader>
           <DialogTitle>코코포리아 채팅팔레트</DialogTitle>
           <DialogDescription>
@@ -85,9 +85,8 @@ export function KokoroforiaExportDialog({ characterName, data, trigger }: Props)
           ref={taRef}
           readOnly
           value={palette}
-          rows={18}
           onClick={(e) => (e.target as HTMLTextAreaElement).select()}
-          className="font-mono text-xs"
+          className="min-h-0 flex-1 resize-none font-mono text-xs"
         />
 
         <div className="flex items-center justify-end gap-2">
