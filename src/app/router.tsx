@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router';
+import { createBrowserRouter, Navigate } from 'react-router';
 import { AppShell } from './layout/AppShell';
 import { RequireAuth } from './features/auth/RequireAuth';
 import { HomePage } from './pages/HomePage';
@@ -17,11 +17,13 @@ import { RecruitmentPage } from './pages/RecruitmentPage';
 import { AuthLoginPage } from './pages/AuthLoginPage';
 import { AuthCallbackPage } from './pages/AuthCallbackPage';
 import { GroupShell } from './layout/GroupShell';
+import { RouteErrorBoundary } from './layout/RouteErrorBoundary';
 
 export const router = createBrowserRouter([
   {
     path: '/',
     Component: AppShell,
+    ErrorBoundary: RouteErrorBoundary,
     children: [
       { index: true, Component: HomePage },
       { path: 'auth/login', Component: AuthLoginPage },
@@ -36,7 +38,10 @@ export const router = createBrowserRouter([
             path: 'g/:slug',
             Component: GroupShell,
             children: [
-              { index: true, Component: CharactersPage },
+              // /g/:slug 진입 시 /g/:slug/characters 로 항상 리다이렉트.
+              // 그래야 자식 페이지에서의 상대 경로 (예: <Link to="new">) 가 항상
+              // /characters/new 로 풀린다.
+              { index: true, element: <Navigate to="characters" replace /> },
               { path: 'characters', Component: CharactersPage },
               { path: 'characters/new', Component: CharacterNewPage },
               { path: 'characters/:characterId', Component: CharacterDetailPage },
