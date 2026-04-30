@@ -245,33 +245,33 @@ export function CharacterEditPage() {
           </div>
         </section>
 
-        {/* 능력치 + 자동계산 — 큰 그리드 */}
-        <section className="grid gap-4 lg:grid-cols-3">
-          <div className="rounded-lg border bg-card p-5 lg:col-span-2">
-            <h2 className="mb-3 text-sm font-medium text-muted-foreground">능력치</h2>
-            <div className="grid grid-cols-3 gap-2">
-              {COC_GRID_ORDER.map((key) => (
-                <BigCharInput
-                  key={key}
-                  code={key}
-                  value={characteristics[key]}
-                  onChange={(v) => setStat(key, v)}
-                />
-              ))}
-            </div>
+        {/* 능력치 — 풀 폭 */}
+        <section className="rounded-lg border bg-card p-5">
+          <h2 className="mb-3 text-sm font-medium text-muted-foreground">능력치</h2>
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-3 md:grid-cols-9">
+            {COC_GRID_ORDER.map((key) => (
+              <BigCharInput
+                key={key}
+                code={key}
+                value={characteristics[key]}
+                onChange={(v) => setStat(key, v)}
+              />
+            ))}
           </div>
-          <div className="rounded-lg border bg-card p-5">
-            <h2 className="mb-3 text-sm font-medium text-muted-foreground">자동 계산</h2>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <Stat label="HP" value={derived.hp} />
-              <Stat label="MP" value={derived.mp} />
-              <Stat label="SAN" value={derived.san} />
-              <Stat label="회피" value={derived.dodge} />
-              <Stat label="모국어" value={derived.ownLanguage} />
-              <Stat label="DB" value={derived.damageBonus} />
-              <Stat label="체격" value={derived.build} />
-              <Stat label="이동" value={derived.mov} />
-            </div>
+        </section>
+
+        {/* 자동 계산 — 풀 폭 banner */}
+        <section className="rounded-lg border bg-card p-5">
+          <h2 className="mb-3 text-sm font-medium text-muted-foreground">자동 계산</h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:grid-cols-8 text-sm">
+            <Stat label="HP" value={derived.hp} />
+            <Stat label="MP" value={derived.mp} />
+            <Stat label="SAN" value={derived.san} />
+            <Stat label="회피" value={derived.dodge} />
+            <Stat label="모국어" value={derived.ownLanguage} />
+            <Stat label="DB" value={derived.damageBonus} />
+            <Stat label="체격" value={derived.build} />
+            <Stat label="이동" value={derived.mov} />
           </div>
         </section>
 

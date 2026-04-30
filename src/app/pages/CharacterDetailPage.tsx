@@ -7,12 +7,13 @@ import { useSession } from '../features/auth/useSession';
 import { COC_GRID_ORDER, COC_LABELS } from '../lib/coc/characteristics';
 import { calculateDerived } from '../lib/coc/derived';
 import {
+  COC_STANDARD_SKILLS,
   COC_SKILL_BY_KEY,
   SKILL_CATEGORY_ORDER,
   type SkillCategory,
 } from '../lib/coc/skills';
 import { skillTotal } from '../lib/coc/skill-calc';
-import type { CoCBackstory, CoCData } from '../lib/coc/types';
+import type { CoCBackstory, CoCData, CoCSkill } from '../lib/coc/types';
 
 interface GroupOutletContext {
   group: GroupRow;
@@ -114,40 +115,40 @@ function CoCSheet({ data }: { data: CoCData }) {
 
   return (
     <>
-      {/* 능력치 + 자동 계산 */}
-      <section className="mb-6 grid gap-4 lg:grid-cols-3">
-        <div className="rounded-lg border bg-card p-5 lg:col-span-2">
-          <h2 className="mb-3 text-sm font-medium text-muted-foreground">능력치</h2>
-          <div className="grid grid-cols-3 gap-2">
-            {COC_GRID_ORDER.map((key) => {
-              const v = data.characteristics[key];
-              const label = COC_LABELS[key];
-              return (
-                <div key={key} className="rounded-md border bg-background px-3 py-2">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                    {key} · {label.ko}
-                  </p>
-                  <p className="mt-0.5 text-3xl font-semibold tabular-nums">{v}</p>
-                  <p className="font-mono text-[10px] text-muted-foreground tabular-nums">
-                    {v} / {Math.floor(v / 2)} / {Math.floor(v / 5)}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
+      {/* 능력치 — 풀 폭 */}
+      <section className="mb-6 rounded-lg border bg-card p-5">
+        <h2 className="mb-3 text-sm font-medium text-muted-foreground">능력치</h2>
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-3 md:grid-cols-9">
+          {COC_GRID_ORDER.map((key) => {
+            const v = data.characteristics[key];
+            const label = COC_LABELS[key];
+            return (
+              <div key={key} className="rounded-md border bg-background px-3 py-2">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  {key} · {label.ko}
+                </p>
+                <p className="mt-0.5 text-3xl font-semibold tabular-nums">{v}</p>
+                <p className="font-mono text-[10px] text-muted-foreground tabular-nums">
+                  {v} / {Math.floor(v / 2)} / {Math.floor(v / 5)}
+                </p>
+              </div>
+            );
+          })}
         </div>
-        <div className="rounded-lg border bg-card p-5">
-          <h2 className="mb-3 text-sm font-medium text-muted-foreground">자동 계산</h2>
-          <div className="grid grid-cols-2 gap-3">
-            <Stat label="HP" value={derived.hp} />
-            <Stat label="MP" value={derived.mp} />
-            <Stat label="SAN" value={derived.san} />
-            <Stat label="회피" value={derived.dodge} />
-            <Stat label="모국어" value={derived.ownLanguage} />
-            <Stat label="DB" value={derived.damageBonus} />
-            <Stat label="체격" value={derived.build} />
-            <Stat label="이동" value={derived.mov} />
-          </div>
+      </section>
+
+      {/* 자동 계산 — 풀 폭 banner */}
+      <section className="mb-6 rounded-lg border bg-card p-5">
+        <h2 className="mb-3 text-sm font-medium text-muted-foreground">자동 계산</h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:grid-cols-8">
+          <Stat label="HP" value={derived.hp} />
+          <Stat label="MP" value={derived.mp} />
+          <Stat label="SAN" value={derived.san} />
+          <Stat label="회피" value={derived.dodge} />
+          <Stat label="모국어" value={derived.ownLanguage} />
+          <Stat label="DB" value={derived.damageBonus} />
+          <Stat label="체격" value={derived.build} />
+          <Stat label="이동" value={derived.mov} />
         </div>
       </section>
 
@@ -176,15 +177,20 @@ function CoCSheet({ data }: { data: CoCData }) {
 }
 
 function SkillsSection({ data }: { data: CoCData }) {
-  const meaningful = (data.skills ?? []).filter((s) => {
-    if (s.occupation > 0 || s.interest > 0) return true;
-    const def = COC_SKILL_BY_KEY.get(s.key);
-    return !!def?.derives;
+  // 모든 표준 기술 + 분배가 있는 custom 기술을 시트처럼 전체 노출.
+  // 0/0 인 표준 기술도 base 값으로 표시 (모국어·회피는 능력치 파생이라 기본값 자동).
+  const stored = new Map((data.skills ?? []).map((s) => [s.key, s]));
+  const standardRows: CoCSkill[] = COC_STANDARD_SKILLS.map((def) => {
+    const s = stored.get(def.key);
+    return s ?? { key: def.key, name: def.name, occupation: 0, interest: 0 };
   });
-  if (meaningful.length === 0) return null;
+  const customRows: CoCSkill[] = (data.skills ?? []).filter(
+    (s) => !COC_SKILL_BY_KEY.has(s.key),
+  );
+  const allRows = [...standardRows, ...customRows];
 
   const groups = SKILL_CATEGORY_ORDER.flatMap((cat) => {
-    const items = meaningful.filter((s) => {
+    const items = allRows.filter((s) => {
       const def = COC_SKILL_BY_KEY.get(s.key);
       const c = (def?.category ?? 'custom') as SkillCategory;
       return c === cat;
@@ -204,16 +210,30 @@ function SkillsSection({ data }: { data: CoCData }) {
             <ul className="divide-y">
               {items.map((s) => {
                 const total = skillTotal(s, data.characteristics);
+                const allocated = s.occupation > 0 || s.interest > 0;
+                const def = COC_SKILL_BY_KEY.get(s.key);
+                const isDerived = !!def?.derives;
                 return (
                   <li
                     key={s.key}
                     className="flex items-center justify-between gap-3 px-3 py-1.5 text-sm"
                   >
-                    <span className="truncate" title={s.name}>
+                    <span
+                      className={`truncate ${
+                        allocated || isDerived ? '' : 'text-muted-foreground'
+                      }`}
+                      title={s.name}
+                    >
                       {s.name}
                     </span>
                     <span className="font-mono text-xs tabular-nums text-muted-foreground">
-                      <span className="text-base font-semibold text-foreground">{total}</span>
+                      <span
+                        className={`text-base font-semibold ${
+                          allocated || isDerived ? 'text-foreground' : 'text-muted-foreground/70'
+                        }`}
+                      >
+                        {total}
+                      </span>
                       {' / '}
                       {Math.floor(total / 2)}
                       {' / '}
