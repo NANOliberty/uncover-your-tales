@@ -29,6 +29,7 @@ import {
   type CoCInventoryItem,
   type CoCSkill,
   type CoCSpell,
+  type CoCStatus,
   type CoCWeapon,
 } from '../lib/coc/types';
 
@@ -37,15 +38,17 @@ interface GroupOutletContext {
 }
 
 const BACKSTORY_FIELDS: { key: keyof CoCBackstory; label: string; placeholder: string }[] = [
-  { key: 'personalDescription', label: '개인 묘사', placeholder: '외모, 분위기, 첫 인상' },
-  { key: 'ideologyBeliefs', label: '사상 / 신념', placeholder: '신념, 종교, 가치관' },
+  { key: 'personalDescription', label: '겉보기', placeholder: '외모, 분위기, 첫 인상' },
+  { key: 'traits', label: '성격', placeholder: '말버릇, 습관, 성격적 특이점' },
+  { key: 'ideologyBeliefs', label: '사상·신념', placeholder: '신념, 종교, 가치관' },
   { key: 'significantPeople', label: '중요한 사람들', placeholder: '가족, 친구, 라이벌' },
-  { key: 'meaningfulLocations', label: '의미 있는 장소', placeholder: '고향, 자주 가는 곳' },
+  { key: 'meaningfulLocations', label: '소중한 장소', placeholder: '고향, 자주 가는 곳' },
   { key: 'treasuredPossessions', label: '소중한 소유물', placeholder: '아끼는 물건' },
-  { key: 'traits', label: '특성', placeholder: '말버릇, 습관, 성격적 특이점' },
   { key: 'injuriesScars', label: '부상과 흉터', placeholder: '몸에 남은 흔적' },
-  { key: 'phobiasManias', label: '공포증 / 매니아', placeholder: '두려운 것, 집착하는 것' },
-  { key: 'thirdPartyEntities', label: '신비한 만남', placeholder: '마도서·주문·미지 존재 등' },
+  { key: 'phobiasManias', label: '공포증과 집착증', placeholder: '두려운 것, 집착하는 것' },
+  { key: 'thirdPartyEntities', label: '이상한 경험', placeholder: '미지 존재와의 만남, 초자연적 경험' },
+  { key: 'tomesAndArtifacts', label: '신화서·주문·유물', placeholder: '읽은 마도서, 알게 된 주문, 입수한 유물' },
+  { key: 'otherNotes', label: '기타 사항', placeholder: '그 외 자유 메모' },
 ];
 
 export function CharacterEditPage() {
@@ -62,7 +65,11 @@ export function CharacterEditPage() {
   const [gender, setGender] = useState('');
   const [residence, setResidence] = useState('');
   const [birthplace, setBirthplace] = useState('');
+  const [heightWeight, setHeightWeight] = useState('');
+  const [nationality, setNationality] = useState('');
+  const [era, setEra] = useState('');
   const [portraitUrl, setPortraitUrl] = useState<string | null>(null);
+  const [status, setStatus] = useState<CoCStatus>({});
   const [characteristics, setCharacteristics] = useState<CoCCharacteristics>(
     emptyCoCData().characteristics,
   );
@@ -84,6 +91,10 @@ export function CharacterEditPage() {
     setGender(data.info?.gender ?? '');
     setResidence(data.info?.residence ?? '');
     setBirthplace(data.info?.birthplace ?? '');
+    setHeightWeight(data.info?.heightWeight ?? '');
+    setNationality(data.info?.nationality ?? '');
+    setEra(data.info?.era ?? '');
+    setStatus(data.status ?? {});
     setCharacteristics({ ...emptyCoCData().characteristics, ...(data.characteristics ?? {}) });
     const saved = new Map<string, CoCSkill>((data.skills ?? []).map((s) => [s.key, s]));
     const merged: CoCSkill[] = COC_STANDARD_SKILLS.map((def) => ({
@@ -154,6 +165,9 @@ export function CharacterEditPage() {
           gender: gender || null,
           residence: residence || null,
           birthplace: birthplace || null,
+          heightWeight: heightWeight || null,
+          nationality: nationality || null,
+          era: era || null,
         },
         characteristics,
         skills: compactedSkills,
@@ -161,6 +175,7 @@ export function CharacterEditPage() {
         spells: spells.filter((s) => s.name?.trim()),
         inventory: inventory.filter((i) => i.name?.trim()),
         backstory,
+        status,
         notes,
       };
 
@@ -246,6 +261,23 @@ export function CharacterEditPage() {
               <Field label="출신지">
                 <Input value={birthplace} onChange={(e) => setBirthplace(e.target.value)} />
               </Field>
+              <Field label="키 / 몸무게">
+                <Input
+                  value={heightWeight}
+                  onChange={(e) => setHeightWeight(e.target.value)}
+                  placeholder="170cm / 65kg"
+                />
+              </Field>
+              <Field label="국적">
+                <Input value={nationality} onChange={(e) => setNationality(e.target.value)} />
+              </Field>
+              <Field label="시대">
+                <Input
+                  value={era}
+                  onChange={(e) => setEra(e.target.value)}
+                  placeholder="현대, 1920년대 등"
+                />
+              </Field>
             </div>
           </div>
         </section>
@@ -277,6 +309,33 @@ export function CharacterEditPage() {
             <Stat label="피해 보너스" value={derived.damageBonus} />
             <Stat label="체구" value={derived.build} />
             <Stat label="이동력" value={derived.mov} />
+          </div>
+        </section>
+
+        {/* 상태 트래커 */}
+        <section className="rounded-lg border bg-card p-5">
+          <h2 className="mb-3 text-sm font-medium text-muted-foreground">상태</h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 text-sm">
+            <StatusToggle
+              label="일시적 광기"
+              checked={!!status.temporaryInsanity}
+              onChange={(v) => setStatus((s) => ({ ...s, temporaryInsanity: v }))}
+            />
+            <StatusToggle
+              label="장기적 광기"
+              checked={!!status.indefiniteInsanity}
+              onChange={(v) => setStatus((s) => ({ ...s, indefiniteInsanity: v }))}
+            />
+            <StatusToggle
+              label="중상"
+              checked={!!status.majorWound}
+              onChange={(v) => setStatus((s) => ({ ...s, majorWound: v }))}
+            />
+            <StatusToggle
+              label="빈사"
+              checked={!!status.dying}
+              onChange={(v) => setStatus((s) => ({ ...s, dying: v }))}
+            />
           </div>
         </section>
 
@@ -708,6 +767,35 @@ function BigCharInput({
       <span className="font-mono text-[10px] text-muted-foreground tabular-nums">
         {value} / {Math.floor(value / 2)} / {Math.floor(value / 5)}
       </span>
+    </label>
+  );
+}
+
+function StatusToggle({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <label
+      className={[
+        'flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 transition',
+        checked
+          ? 'border-destructive/50 bg-destructive/5'
+          : 'bg-background hover:bg-accent/40',
+      ].join(' ')}
+    >
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="h-4 w-4"
+      />
+      <span className={checked ? 'font-medium text-destructive' : ''}>{label}</span>
     </label>
   );
 }

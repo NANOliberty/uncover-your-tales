@@ -131,3 +131,75 @@ export function successTiers(value: number): { hard: number; extreme: number } {
     extreme: Math.floor(value / 5),
   };
 }
+
+/**
+ * 재력(Credit Rating) 점수에 따른 생활 수준·소비·현금·자산.
+ * 시트 W63/AA63/AE63 의 if-체인을 그대로 옮긴 형태.
+ *
+ * 주의: 시트는 *1.3 으로 약간 곱해 표기 — 한국어판 환산 가산 정도.
+ * 우리도 동일하게 따라 사용자가 본 숫자와 일치하게 한다.
+ */
+export type WealthLevel = 'destitute' | 'poor' | 'average' | 'wealthy' | 'rich' | 'super_rich';
+
+export interface CoCWealth {
+  level: WealthLevel;
+  /** 한국어판 시트 표기 한 줄 묘사 */
+  description: string;
+  spendingLevel: number;
+  cash: number;
+  /** 99 면 "$100,000,000+" 표기, 그 외엔 숫자 */
+  assets: number | string;
+}
+
+const W = (n: number) => Math.round(n * 1.3);
+
+export function calculateWealth(creditRating: number): CoCWealth {
+  const r = Number.isFinite(creditRating) ? Math.max(0, Math.floor(creditRating)) : 0;
+  if (r === 0)
+    return {
+      level: 'destitute',
+      description: '무일푼, 노숙',
+      spendingLevel: W(10),
+      cash: W(10),
+      assets: 0,
+    };
+  if (r <= 9)
+    return {
+      level: 'poor',
+      description: '가난, 최소한의 재산만 소유',
+      spendingLevel: W(40),
+      cash: W(r * 20),
+      assets: W(r * 200),
+    };
+  if (r <= 49)
+    return {
+      level: 'average',
+      description: '보통, 적당히 안락한 생활',
+      spendingLevel: W(200),
+      cash: W(r * 40),
+      assets: W(r * 1000),
+    };
+  if (r <= 89)
+    return {
+      level: 'wealthy',
+      description: '부유, 약간의 사치 가능',
+      spendingLevel: W(1000),
+      cash: W(r * 100),
+      assets: W(r * 10000),
+    };
+  if (r <= 98)
+    return {
+      level: 'rich',
+      description: '자산가, 막대한 부와 사치',
+      spendingLevel: W(5000),
+      cash: W(r * 400),
+      assets: W(r * 40000),
+    };
+  return {
+    level: 'super_rich',
+    description: '갑부, 돈은 문제가 되지 않는 수준',
+    spendingLevel: 100000,
+    cash: W(1000000),
+    assets: '$100,000,000+',
+  };
+}

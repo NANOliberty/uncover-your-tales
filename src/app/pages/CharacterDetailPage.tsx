@@ -5,7 +5,7 @@ import type { GroupRow } from '../lib/supabase/database.types';
 import { useCharacter } from '../features/characters/api';
 import { useSession } from '../features/auth/useSession';
 import { COC_GRID_ORDER, COC_LABELS } from '../lib/coc/characteristics';
-import { calculateDerived, maxSanity } from '../lib/coc/derived';
+import { calculateDerived, calculateWealth, maxSanity } from '../lib/coc/derived';
 import {
   COC_STANDARD_SKILLS,
   COC_SKILL_BY_KEY,
@@ -26,15 +26,17 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const BACKSTORY_LABELS: { key: keyof CoCBackstory; label: string }[] = [
-  { key: 'personalDescription', label: '개인 묘사' },
-  { key: 'ideologyBeliefs', label: '사상 / 신념' },
+  { key: 'personalDescription', label: '겉보기' },
+  { key: 'traits', label: '성격' },
+  { key: 'ideologyBeliefs', label: '사상·신념' },
   { key: 'significantPeople', label: '중요한 사람들' },
-  { key: 'meaningfulLocations', label: '의미 있는 장소' },
+  { key: 'meaningfulLocations', label: '소중한 장소' },
   { key: 'treasuredPossessions', label: '소중한 소유물' },
-  { key: 'traits', label: '특성' },
   { key: 'injuriesScars', label: '부상과 흉터' },
-  { key: 'phobiasManias', label: '공포증 / 매니아' },
-  { key: 'thirdPartyEntities', label: '신비한 만남' },
+  { key: 'phobiasManias', label: '공포증과 집착증' },
+  { key: 'thirdPartyEntities', label: '이상한 경험' },
+  { key: 'tomesAndArtifacts', label: '신화서·주문·유물' },
+  { key: 'otherNotes', label: '기타 사항' },
 ];
 
 export function CharacterDetailPage() {
@@ -96,11 +98,18 @@ export function CharacterDetailPage() {
             {data.info?.gender ? ` · ${data.info.gender}` : ''}
             {data.info?.residence ? ` · ${data.info.residence}` : ''}
             {data.info?.birthplace ? ` · ${data.info.birthplace} 출신` : ''}
+            {data.info?.nationality ? ` · ${data.info.nationality}` : ''}
+            {data.info?.era ? ` · ${data.info.era}` : ''}
+            {data.info?.heightWeight ? ` · ${data.info.heightWeight}` : ''}
           </p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             <Badge>{character.system === 'coc7' ? 'CoC 7판' : character.system}</Badge>
             <Badge>{STATUS_LABEL[character.status] ?? character.status}</Badge>
             {group.is_solo && <Badge accent>내 작업실</Badge>}
+            {data.status?.temporaryInsanity && <Badge danger>일시적 광기</Badge>}
+            {data.status?.indefiniteInsanity && <Badge danger>장기적 광기</Badge>}
+            {data.status?.majorWound && <Badge danger>중상</Badge>}
+            {data.status?.dying && <Badge danger>빈사</Badge>}
           </div>
         </div>
       </header>
@@ -155,6 +164,7 @@ function CoCSheet({ data }: { data: CoCData }) {
         </div>
       </section>
 
+      <WealthPanel data={data} />
       <SkillsSection data={data} />
       <WeaponsSection data={data} />
 
@@ -176,6 +186,32 @@ function CoCSheet({ data }: { data: CoCData }) {
         코코포리아 채팅팔레트 export 는 M2.6 에서 추가됩니다.
       </p>
     </>
+  );
+}
+
+function WealthPanel({ data }: { data: CoCData }) {
+  const credit = data.skills.find((s) => s.key === 'credit_rating');
+  if (!credit) return null;
+  const total = skillTotal(credit, data.characteristics);
+  const wealth = calculateWealth(total);
+  const fmt = (n: number | string) =>
+    typeof n === 'number' ? n.toLocaleString('ko-KR') : n;
+
+  return (
+    <section className="mb-6 rounded-lg border bg-card p-5">
+      <div className="mb-2 flex items-baseline gap-2">
+        <h2 className="text-sm font-medium text-muted-foreground">재력</h2>
+        <span className="text-xs text-muted-foreground">
+          재력 <span className="font-mono tabular-nums text-foreground">{total}</span> ·{' '}
+          {wealth.description}
+        </span>
+      </div>
+      <div className="grid grid-cols-3 gap-3 text-sm">
+        <Stat label="소비 수준" value={fmt(wealth.spendingLevel)} />
+        <Stat label="현금" value={fmt(wealth.cash)} />
+        <Stat label="자산" value={fmt(wealth.assets)} />
+      </div>
+    </section>
   );
 }
 
@@ -393,16 +429,19 @@ function Stat({
   );
 }
 
-function Badge({ children, accent }: { children: React.ReactNode; accent?: boolean }) {
-  return (
-    <span
-      className={
-        accent
-          ? 'rounded-full bg-primary/10 px-2 py-0.5 text-[11px] text-primary'
-          : 'rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground'
-      }
-    >
-      {children}
-    </span>
-  );
+function Badge({
+  children,
+  accent,
+  danger,
+}: {
+  children: React.ReactNode;
+  accent?: boolean;
+  danger?: boolean;
+}) {
+  const cls = danger
+    ? 'rounded-full bg-destructive/10 px-2 py-0.5 text-[11px] font-medium text-destructive'
+    : accent
+      ? 'rounded-full bg-primary/10 px-2 py-0.5 text-[11px] text-primary'
+      : 'rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground';
+  return <span className={cls}>{children}</span>;
 }
