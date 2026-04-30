@@ -134,6 +134,11 @@ export interface CoCData {
   currentHp?: number | null;
   currentMp?: number | null;
   currentSan?: number | null;
+  /**
+   * 명장면 / 인상적 순간 — 자유 텍스트, 한 줄당 한 사건 권장.
+   * 세션 종료 시 KP·PL 이 의미 있는 순간을 기록. (M5 세션 로그에서 자동 추출 가능 예정)
+   */
+  memorableMoments?: string;
   notes: string;
 }
 

@@ -10,6 +10,7 @@ import type { GroupRow } from '../lib/supabase/database.types';
 import { useCharacter } from '../features/characters/api';
 import { useUpdateCharacter } from '../features/characters/mutations';
 import { useSession } from '../features/auth/useSession';
+import { DeleteCharacterDialog } from '../features/characters/DeleteCharacterDialog';
 import { PortraitUploader } from '../features/characters/PortraitUploader';
 import { COC_GRID_ORDER, fullLabel } from '../lib/coc/characteristics';
 import { calculateDerived, maxSanity } from '../lib/coc/derived';
@@ -62,6 +63,8 @@ export function CharacterEditPage() {
 
   const [name, setName] = useState('');
   const [occupation, setOccupation] = useState('');
+  const [lifeStatus, setLifeStatus] = useState<'active' | 'retired' | 'dead'>('active');
+  const [memorableMoments, setMemorableMoments] = useState('');
   const [age, setAge] = useState<number | ''>('');
   const [gender, setGender] = useState('');
   const [residence, setResidence] = useState('');
@@ -87,6 +90,7 @@ export function CharacterEditPage() {
     const data = (character.data ?? emptyCoCData()) as CoCData;
     setName(character.name);
     setOccupation(character.occupation ?? '');
+    setLifeStatus(character.status);
     setPortraitUrl(character.portrait_url ?? null);
     setAge(data.info?.age ?? '');
     setGender(data.info?.gender ?? '');
@@ -124,6 +128,7 @@ export function CharacterEditPage() {
     setSpells(data.spells ?? []);
     setInventory(data.inventory ?? []);
     setBackstory(data.backstory ?? {});
+    setMemorableMoments(data.memorableMoments ?? '');
     setNotes(data.notes ?? '');
   }, [character]);
 
@@ -189,6 +194,7 @@ export function CharacterEditPage() {
         inventory: inventory.filter((i) => i.name?.trim()),
         backstory,
         status,
+        memorableMoments: memorableMoments.trim() || undefined,
         notes,
       };
 
@@ -197,6 +203,7 @@ export function CharacterEditPage() {
         patch: {
           name: name.trim(),
           occupation: occupation.trim() || null,
+          status: lifeStatus,
           portrait_url: portraitUrl,
           data: data as unknown as Record<string, unknown>,
         },
@@ -300,6 +307,19 @@ export function CharacterEditPage() {
                   onChange={(e) => setEra(e.target.value)}
                   placeholder="현대, 1920년대 등"
                 />
+              </Field>
+              <Field label="상태">
+                <select
+                  value={lifeStatus}
+                  onChange={(e) =>
+                    setLifeStatus(e.target.value as 'active' | 'retired' | 'dead')
+                  }
+                  className="h-9 w-full rounded-md border bg-input-background px-3 text-sm outline-none focus:border-ring"
+                >
+                  <option value="active">활동 중</option>
+                  <option value="retired">은퇴</option>
+                  <option value="dead">사망</option>
+                </select>
               </Field>
             </div>
           </div>
@@ -727,6 +747,24 @@ export function CharacterEditPage() {
           </div>
         </section>
 
+        {/* 명장면 */}
+        <section className="rounded-lg border bg-card p-5">
+          <Label htmlFor="moments" className="mb-1 block text-sm font-medium text-muted-foreground">
+            명장면
+          </Label>
+          <p className="mb-2 text-xs text-muted-foreground">
+            세션 중 인상적인 순간 (1펌블/100크리, 결정적 굴림, 명대사 등). 한 줄에 하나 권장.
+          </p>
+          <Textarea
+            id="moments"
+            rows={4}
+            value={memorableMoments}
+            onChange={(e) => setMemorableMoments(e.target.value)}
+            placeholder="예: 비뚤어진 동심 1회차 — 도서관에서 100 크리. NPC 의 눈빛이 바뀌었다."
+            className="font-[Pretendard]"
+          />
+        </section>
+
         {/* 메모 */}
         <section className="rounded-lg border bg-card p-5">
           <Label htmlFor="notes" className="mb-1 block text-sm font-medium text-muted-foreground">
@@ -739,6 +777,22 @@ export function CharacterEditPage() {
             onChange={(e) => setNotes(e.target.value)}
             placeholder="자유 메모"
           />
+        </section>
+
+        {/* 위험 영역 — 캐릭터 삭제 */}
+        <section className="rounded-lg border border-destructive/30 bg-destructive/5 p-5">
+          <h2 className="text-sm font-medium text-destructive">위험 영역</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            삭제하면 모든 데이터(시트·일러스트·기능 분배·백스토리)가 사라집니다.
+            세션 기록과의 연결도 끊어집니다. 되돌릴 수 없습니다.
+          </p>
+          <div className="mt-3">
+            <DeleteCharacterDialog
+              characterId={character.id}
+              characterName={character.name}
+              redirectTo={`/g/${group.slug}/characters`}
+            />
+          </div>
         </section>
 
         <div className="sticky bottom-4 flex items-center justify-end gap-2 rounded-lg border bg-background/95 px-4 py-3 shadow-sm backdrop-blur">

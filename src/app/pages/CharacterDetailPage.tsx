@@ -265,6 +265,13 @@ function CoCSheet({
 
       <BackstorySection data={data} />
 
+      {data.memorableMoments?.trim() && (
+        <section className="mb-6 rounded-lg border bg-card p-5">
+          <h2 className="mb-2 text-sm font-medium text-muted-foreground">명장면</h2>
+          <p className="whitespace-pre-wrap text-sm">{data.memorableMoments}</p>
+        </section>
+      )}
+
       {data.notes && (
         <section className="mb-6 rounded-lg border bg-card p-5">
           <h2 className="mb-2 text-sm font-medium text-muted-foreground">메모</h2>

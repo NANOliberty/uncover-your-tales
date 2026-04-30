@@ -40,6 +40,25 @@ export function useCreateCharacter() {
 }
 
 /**
+ * 캐릭터 삭제. RLS 가 owner 만 허용. 되돌릴 수 없음.
+ * portrait Storage 파일은 별도 정리 필요(추후) — 지금은 row 만 제거.
+ */
+export function useDeleteCharacter() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string): Promise<void> => {
+      const { error } = await supabase.from('characters').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: (_data, id) => {
+      qc.invalidateQueries({ queryKey: charactersQueryKeys.all });
+      qc.removeQueries({ queryKey: charactersQueryKeys.one(id) });
+    },
+  });
+}
+
+/**
  * 캐릭터 부분 수정. owner 만 수정 가능 (RLS).
  * data jsonb 는 항상 통째로 덮어씀 — 부분 머지가 필요하면 별도 RPC 도입.
  */
