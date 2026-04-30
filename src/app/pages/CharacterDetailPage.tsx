@@ -200,7 +200,7 @@ function SkillsSection({ data }: { data: CoCData }) {
 
   return (
     <section className="mb-6 rounded-lg border bg-card p-5">
-      <h2 className="mb-4 text-sm font-medium text-muted-foreground">기술</h2>
+      <h2 className="mb-4 text-sm font-medium text-muted-foreground">기능</h2>
       <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
         {groups.map(({ category, items }) => (
           <div key={category} className="rounded-md border">
@@ -263,12 +263,12 @@ function WeaponsSection({ data }: { data: CoCData }) {
         <table className="w-full text-sm">
           <thead className="bg-muted/30 text-[11px] uppercase tracking-wider text-muted-foreground">
             <tr>
-              <th className="px-3 py-2 text-left">이름</th>
-              <th className="px-3 py-2 text-left">기술</th>
-              <th className="px-3 py-2 text-left">데미지</th>
+              <th className="px-3 py-2 text-left">무기</th>
+              <th className="px-3 py-2 text-left">기능</th>
+              <th className="px-3 py-2 text-left">피해</th>
               <th className="px-3 py-2 text-left">사거리</th>
-              <th className="px-3 py-2 text-left">공격</th>
-              <th className="px-3 py-2 text-left">탄창</th>
+              <th className="px-3 py-2 text-left">공격횟수</th>
+              <th className="px-3 py-2 text-left">장탄수</th>
             </tr>
           </thead>
           <tbody className="divide-y">

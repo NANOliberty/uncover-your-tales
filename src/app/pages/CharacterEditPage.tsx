@@ -278,13 +278,13 @@ export function CharacterEditPage() {
         {/* 기술 */}
         <section className="rounded-lg border bg-card p-5">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-sm font-medium text-muted-foreground">기술</h2>
+            <h2 className="text-sm font-medium text-muted-foreground">기능</h2>
             <div className="flex flex-wrap items-center gap-3 text-xs">
               <Pool label="직업" hint="EDU×4" used={pools.occupationUsed} max={pools.occupationMax} />
               <Pool label="흥미" hint="INT×2" used={pools.interestUsed} max={pools.interestMax} />
               <Button type="button" size="sm" variant="outline" onClick={addCustomSkill}>
                 <Plus className="mr-1 h-3 w-3" />
-                기술 추가
+                기능 추가
               </Button>
             </div>
           </div>
@@ -347,15 +347,14 @@ export function CharacterEditPage() {
             ))}
           </div>
           <p className="mt-3 text-[11px] text-muted-foreground">
-            열 순서: 기술 / 기본 / 직업 / 흥미 / 합계. 회피·모국어는 능력치 변경 시 기본값이 즉시 갱신됩니다.
+            열 순서: 기능 / 기본 / 직업 / 흥미 / 합계. 회피·모국어는 능력치 변경 시 기본값이 즉시 갱신됩니다.
           </p>
         </section>
 
         {/* 무기 */}
-        <RepeatableSection
+        {/* 무기 — 컴팩트 표 */}
+        <TableSection
           title="무기"
-          empty="아직 등록된 무기가 없습니다."
-          items={weapons}
           add={() =>
             setWeapons((prev) => [
               ...prev,
@@ -363,146 +362,234 @@ export function CharacterEditPage() {
             ])
           }
         >
-          {weapons.map((w, i) => (
-            <li key={i} className="grid gap-2 border-b px-3 py-2 last:border-b-0 sm:grid-cols-12">
-              <RowInput
-                placeholder="이름 (예: 권총)"
-                value={w.name}
-                onChange={(v) =>
-                  setWeapons((prev) => prev.map((x, j) => (j === i ? { ...x, name: v } : x)))
-                }
-                cols={3}
-              />
-              <RowInput
-                placeholder="기술 (예: 사격(권총))"
-                value={w.skill ?? ''}
-                onChange={(v) =>
-                  setWeapons((prev) => prev.map((x, j) => (j === i ? { ...x, skill: v } : x)))
-                }
-                cols={3}
-              />
-              <RowInput
-                placeholder="데미지"
-                value={w.damage ?? ''}
-                onChange={(v) =>
-                  setWeapons((prev) => prev.map((x, j) => (j === i ? { ...x, damage: v } : x)))
-                }
-                cols={2}
-              />
-              <RowInput
-                placeholder="사거리"
-                value={w.range ?? ''}
-                onChange={(v) =>
-                  setWeapons((prev) => prev.map((x, j) => (j === i ? { ...x, range: v } : x)))
-                }
-                cols={1}
-              />
-              <RowInput
-                placeholder="공격"
-                value={w.attacks ?? ''}
-                onChange={(v) =>
-                  setWeapons((prev) => prev.map((x, j) => (j === i ? { ...x, attacks: v } : x)))
-                }
-                cols={1}
-              />
-              <RowInput
-                placeholder="탄창"
-                value={w.ammo ?? ''}
-                onChange={(v) =>
-                  setWeapons((prev) =>
-                    prev.map((x, j) => (j === i ? { ...x, ammo: v || null } : x)),
-                  )
-                }
-                cols={1}
-              />
-              <RemoveCell onRemove={() => setWeapons((prev) => prev.filter((_, j) => j !== i))} />
-            </li>
-          ))}
-        </RepeatableSection>
+          <table className="w-full text-sm">
+            <thead className="bg-muted/30 text-[10px] uppercase tracking-wider text-muted-foreground">
+              <tr>
+                <Th w="22%">무기</Th>
+                <Th w="22%">기능</Th>
+                <Th w="14%">피해</Th>
+                <Th w="12%">사거리</Th>
+                <Th w="11%">공격횟수</Th>
+                <Th w="11%">장탄수</Th>
+                <th className="w-8" />
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {weapons.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="px-3 py-4 text-center text-xs text-muted-foreground"
+                  >
+                    아직 등록된 무기가 없습니다.
+                  </td>
+                </tr>
+              ) : (
+                weapons.map((w, i) => (
+                  <tr key={i}>
+                    <CellInput
+                      placeholder="권총"
+                      value={w.name}
+                      onChange={(v) =>
+                        setWeapons((prev) =>
+                          prev.map((x, j) => (j === i ? { ...x, name: v } : x)),
+                        )
+                      }
+                    />
+                    <CellInput
+                      placeholder="사격(권총)"
+                      value={w.skill ?? ''}
+                      onChange={(v) =>
+                        setWeapons((prev) =>
+                          prev.map((x, j) => (j === i ? { ...x, skill: v } : x)),
+                        )
+                      }
+                    />
+                    <CellInput
+                      placeholder="1d10"
+                      value={w.damage ?? ''}
+                      onChange={(v) =>
+                        setWeapons((prev) =>
+                          prev.map((x, j) => (j === i ? { ...x, damage: v } : x)),
+                        )
+                      }
+                    />
+                    <CellInput
+                      placeholder="10m"
+                      value={w.range ?? ''}
+                      onChange={(v) =>
+                        setWeapons((prev) =>
+                          prev.map((x, j) => (j === i ? { ...x, range: v } : x)),
+                        )
+                      }
+                    />
+                    <CellInput
+                      placeholder="1"
+                      value={w.attacks ?? ''}
+                      onChange={(v) =>
+                        setWeapons((prev) =>
+                          prev.map((x, j) => (j === i ? { ...x, attacks: v } : x)),
+                        )
+                      }
+                    />
+                    <CellInput
+                      placeholder="9"
+                      value={w.ammo ?? ''}
+                      onChange={(v) =>
+                        setWeapons((prev) =>
+                          prev.map((x, j) =>
+                            j === i ? { ...x, ammo: v || null } : x,
+                          ),
+                        )
+                      }
+                    />
+                    <RemoveCellTd
+                      onRemove={() => setWeapons((prev) => prev.filter((_, j) => j !== i))}
+                    />
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </TableSection>
 
-        {/* 주문 / 인벤 — 2열 */}
+        {/* 주문 / 소지품 — 2열 */}
         <div className="grid gap-6 lg:grid-cols-2">
-          <RepeatableSection
+          <TableSection
             title="주문 / 마법"
-            empty="주문이 필요한 캐릭터만 채우세요."
-            items={spells}
             add={() => setSpells((prev) => [...prev, { name: '', cost: '', effect: '' }])}
           >
-            {spells.map((s, i) => (
-              <li key={i} className="grid gap-2 border-b px-3 py-2 last:border-b-0 sm:grid-cols-12">
-                <RowInput
-                  placeholder="이름"
-                  value={s.name}
-                  onChange={(v) =>
-                    setSpells((prev) => prev.map((x, j) => (j === i ? { ...x, name: v } : x)))
-                  }
-                  cols={4}
-                />
-                <RowInput
-                  placeholder="비용 (5MP, 1d6 SAN)"
-                  value={s.cost ?? ''}
-                  onChange={(v) =>
-                    setSpells((prev) => prev.map((x, j) => (j === i ? { ...x, cost: v } : x)))
-                  }
-                  cols={3}
-                />
-                <RowInput
-                  placeholder="효과"
-                  value={s.effect ?? ''}
-                  onChange={(v) =>
-                    setSpells((prev) => prev.map((x, j) => (j === i ? { ...x, effect: v } : x)))
-                  }
-                  cols={4}
-                />
-                <RemoveCell onRemove={() => setSpells((prev) => prev.filter((_, j) => j !== i))} />
-              </li>
-            ))}
-          </RepeatableSection>
+            <table className="w-full text-sm">
+              <thead className="bg-muted/30 text-[10px] uppercase tracking-wider text-muted-foreground">
+                <tr>
+                  <Th w="28%">주문</Th>
+                  <Th w="22%">소비</Th>
+                  <Th>효과</Th>
+                  <th className="w-8" />
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {spells.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="px-3 py-4 text-center text-xs text-muted-foreground"
+                    >
+                      주문이 필요한 캐릭터만 채우세요.
+                    </td>
+                  </tr>
+                ) : (
+                  spells.map((s, i) => (
+                    <tr key={i}>
+                      <CellInput
+                        placeholder="이름"
+                        value={s.name}
+                        onChange={(v) =>
+                          setSpells((prev) =>
+                            prev.map((x, j) => (j === i ? { ...x, name: v } : x)),
+                          )
+                        }
+                      />
+                      <CellInput
+                        placeholder="5MP, 1d6 SAN"
+                        value={s.cost ?? ''}
+                        onChange={(v) =>
+                          setSpells((prev) =>
+                            prev.map((x, j) => (j === i ? { ...x, cost: v } : x)),
+                          )
+                        }
+                      />
+                      <CellInput
+                        placeholder="효과"
+                        value={s.effect ?? ''}
+                        onChange={(v) =>
+                          setSpells((prev) =>
+                            prev.map((x, j) => (j === i ? { ...x, effect: v } : x)),
+                          )
+                        }
+                      />
+                      <RemoveCellTd
+                        onRemove={() => setSpells((prev) => prev.filter((_, j) => j !== i))}
+                      />
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </TableSection>
 
-          <RepeatableSection
+          <TableSection
             title="소지품"
-            empty="아직 비어있습니다."
-            items={inventory}
             add={() => setInventory((prev) => [...prev, { name: '', qty: 1, notes: '' }])}
           >
-            {inventory.map((it, i) => (
-              <li key={i} className="grid gap-2 border-b px-3 py-2 last:border-b-0 sm:grid-cols-12">
-                <RowInput
-                  placeholder="이름"
-                  value={it.name}
-                  onChange={(v) =>
-                    setInventory((prev) => prev.map((x, j) => (j === i ? { ...x, name: v } : x)))
-                  }
-                  cols={5}
-                />
-                <input
-                  type="number"
-                  min={1}
-                  placeholder="수량"
-                  value={it.qty ?? 1}
-                  onChange={(e) =>
-                    setInventory((prev) =>
-                      prev.map((x, j) =>
-                        j === i ? { ...x, qty: Math.max(1, Number(e.target.value) || 1) } : x,
-                      ),
-                    )
-                  }
-                  className="rounded-md border bg-input-background px-2 py-1.5 text-sm tabular-nums outline-none focus:border-ring sm:col-span-2"
-                />
-                <RowInput
-                  placeholder="메모"
-                  value={it.notes ?? ''}
-                  onChange={(v) =>
-                    setInventory((prev) => prev.map((x, j) => (j === i ? { ...x, notes: v } : x)))
-                  }
-                  cols={4}
-                />
-                <RemoveCell
-                  onRemove={() => setInventory((prev) => prev.filter((_, j) => j !== i))}
-                />
-              </li>
-            ))}
-          </RepeatableSection>
+            <table className="w-full text-sm">
+              <thead className="bg-muted/30 text-[10px] uppercase tracking-wider text-muted-foreground">
+                <tr>
+                  <Th w="42%">품목</Th>
+                  <Th w="14%">수량</Th>
+                  <Th>비고</Th>
+                  <th className="w-8" />
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {inventory.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="px-3 py-4 text-center text-xs text-muted-foreground"
+                    >
+                      아직 비어있습니다.
+                    </td>
+                  </tr>
+                ) : (
+                  inventory.map((it, i) => (
+                    <tr key={i}>
+                      <CellInput
+                        placeholder="품목"
+                        value={it.name}
+                        onChange={(v) =>
+                          setInventory((prev) =>
+                            prev.map((x, j) => (j === i ? { ...x, name: v } : x)),
+                          )
+                        }
+                      />
+                      <td className="p-0">
+                        <input
+                          type="number"
+                          min={1}
+                          value={it.qty ?? 1}
+                          onChange={(e) =>
+                            setInventory((prev) =>
+                              prev.map((x, j) =>
+                                j === i
+                                  ? { ...x, qty: Math.max(1, Number(e.target.value) || 1) }
+                                  : x,
+                              ),
+                            )
+                          }
+                          className="w-full bg-transparent px-2 py-1.5 text-center text-sm tabular-nums outline-none focus:bg-accent/40"
+                        />
+                      </td>
+                      <CellInput
+                        placeholder="비고"
+                        value={it.notes ?? ''}
+                        onChange={(v) =>
+                          setInventory((prev) =>
+                            prev.map((x, j) => (j === i ? { ...x, notes: v } : x)),
+                          )
+                        }
+                      />
+                      <RemoveCellTd
+                        onRemove={() =>
+                          setInventory((prev) => prev.filter((_, j) => j !== i))
+                        }
+                      />
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </TableSection>
         </div>
 
         {/* 백스토리 */}
@@ -643,16 +730,16 @@ function Pool({
   );
 }
 
-function RepeatableSection({
+/**
+ * 시트형 컴팩트 표 섹션. 헤더 + 표 + '추가' 버튼.
+ * 행 컴포넌트는 부모가 children 으로 직접 <tr> 들을 넘긴다.
+ */
+function TableSection({
   title,
-  empty,
-  items,
   add,
   children,
 }: {
   title: string;
-  empty: string;
-  items: unknown[];
   add: () => void;
   children: React.ReactNode;
 }) {
@@ -665,55 +752,55 @@ function RepeatableSection({
           추가
         </Button>
       </div>
-      {items.length === 0 ? (
-        <p className="rounded-md border border-dashed bg-background px-3 py-3 text-center text-xs text-muted-foreground">
-          {empty}
-        </p>
-      ) : (
-        <ul className="overflow-hidden rounded-md border">{children}</ul>
-      )}
+      <div className="overflow-x-auto rounded-md border">{children}</div>
     </section>
   );
 }
 
-function RowInput({
-  value,
-  onChange,
-  placeholder,
-  cols,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder: string;
-  cols: 1 | 2 | 3 | 4 | 5;
-}) {
-  // Tailwind JIT 가 동적 문자열은 못 잡으므로 정적 매핑.
-  const colClass = {
-    1: 'sm:col-span-1',
-    2: 'sm:col-span-2',
-    3: 'sm:col-span-3',
-    4: 'sm:col-span-4',
-    5: 'sm:col-span-5',
-  }[cols];
+function Th({ children, w }: { children: React.ReactNode; w?: string }) {
   return (
-    <input
-      placeholder={placeholder}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className={`${colClass} rounded-md border bg-input-background px-2 py-1.5 text-sm outline-none focus:border-ring`}
-    />
+    <th
+      className="px-3 py-2 text-left font-medium"
+      style={w ? { width: w } : undefined}
+    >
+      {children}
+    </th>
   );
 }
 
-function RemoveCell({ onRemove }: { onRemove: () => void }) {
+/** 셀 안의 borderless input — 시트 셀 느낌. Focus 시 옅은 배경. */
+function CellInput({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
   return (
-    <button
-      type="button"
-      onClick={onRemove}
-      className="flex items-center justify-center rounded-md text-muted-foreground hover:text-destructive sm:col-span-1"
-      aria-label="삭제"
-    >
-      <Trash2 className="h-4 w-4" />
-    </button>
+    <td className="p-0">
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full bg-transparent px-3 py-1.5 text-sm outline-none placeholder:text-muted-foreground/60 focus:bg-accent/40"
+      />
+    </td>
+  );
+}
+
+function RemoveCellTd({ onRemove }: { onRemove: () => void }) {
+  return (
+    <td className="w-8 p-0 text-center">
+      <button
+        type="button"
+        onClick={onRemove}
+        className="flex h-full w-full items-center justify-center text-muted-foreground hover:text-destructive"
+        aria-label="삭제"
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+      </button>
+    </td>
   );
 }
