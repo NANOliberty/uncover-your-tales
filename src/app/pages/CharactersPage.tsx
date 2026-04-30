@@ -178,9 +178,9 @@ export function CharactersPage() {
           </div>
 
           {filtered.length === 0 ? (
-            <div className="rounded-lg border border-dashed bg-card p-10 text-center text-sm text-muted-foreground">
+            <p className="py-12 text-center text-sm text-muted-foreground">
               조건과 일치하는 캐릭터가 없습니다.
-            </div>
+            </p>
           ) : (
             <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {filtered.map((c) => {
