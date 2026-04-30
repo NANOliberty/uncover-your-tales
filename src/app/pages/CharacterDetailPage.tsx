@@ -302,41 +302,37 @@ function ProfileBlock({
   ];
 
   return (
-    <div className="flex flex-col items-center gap-4">
-      {/* 일러스트 — 가운데 정렬, 큼직하게. 인물 아트는 보통 세로 비율이라 3:4. */}
+    <div className="flex items-center gap-4">
+      {/* 일러스트 — 세로 가운데 정렬 (items-center 가 처리) */}
       {character.portrait_url ? (
         <img
           src={character.portrait_url}
           alt=""
-          className="aspect-[3/4] w-48 rounded-lg border object-cover sm:w-56"
+          className="h-44 w-44 shrink-0 rounded-lg border object-cover sm:h-48 sm:w-48"
         />
       ) : (
-        <div className="flex aspect-[3/4] w-48 items-center justify-center rounded-lg border bg-muted text-muted-foreground sm:w-56">
+        <div className="flex h-44 w-44 shrink-0 items-center justify-center rounded-lg border bg-muted text-muted-foreground sm:h-48 sm:w-48">
           <User className="h-16 w-16" />
         </div>
       )}
-
-      {/* 이름 + 배지 — 가운데 */}
-      <div className="text-center">
+      <div className="flex min-w-0 flex-1 flex-col">
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{character.name}</h1>
-        <div className="mt-2 flex flex-wrap justify-center gap-1.5">
+        <div className="mt-2 flex flex-wrap gap-1.5">
           <Badge>{character.system === 'coc7' ? 'CoC 7판' : character.system}</Badge>
           <Badge>{STATUS_LABEL[character.status] ?? character.status}</Badge>
           {inSoloGroup && <Badge accent>내 작업실</Badge>}
         </div>
+        <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-sm">
+          {rows.map((r) => (
+            <div key={r.label} className="contents">
+              <dt className="text-xs text-muted-foreground">{r.label}</dt>
+              <dd className={r.value ? '' : 'text-muted-foreground/60'}>
+                {r.value || '—'}
+              </dd>
+            </div>
+          ))}
+        </dl>
       </div>
-
-      {/* 기본 정보 — 세로 key-value 표 (왼쪽 정렬, 가운데 컨테이너) */}
-      <dl className="grid w-full max-w-xs grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
-        {rows.map((r) => (
-          <div key={r.label} className="contents">
-            <dt className="text-xs text-muted-foreground">{r.label}</dt>
-            <dd className={r.value ? '' : 'text-muted-foreground/60'}>
-              {r.value || '—'}
-            </dd>
-          </div>
-        ))}
-      </dl>
     </div>
   );
 }
