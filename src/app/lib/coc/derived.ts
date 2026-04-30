@@ -19,9 +19,18 @@ export function magicPoints(c: CoCCharacteristics): number {
   return Math.floor(clamp(c.POW) / 5);
 }
 
-/** Sanity (시작값) = POW. */
+/** Sanity (시작값) = POW. 시트 표기: "이성 초기치". */
 export function sanity(c: CoCCharacteristics): number {
   return clamp(c.POW);
+}
+
+/**
+ * Sanity 최대치 = 99 - 크툴루 신화 점수.
+ * (CoC 7e 공식 룰: Mythos 점수가 SAN cap 을 깎는다.)
+ * 시트 셀 BA32 = `99 - 크툴루신화`.
+ */
+export function maxSanity(mythosTotal: number): number {
+  return Math.max(0, 99 - clamp(mythosTotal));
 }
 
 /** Dodge = DEX / 2. (별도 기술이지만 기본값은 능력치 파생) */

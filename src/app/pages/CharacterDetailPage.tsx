@@ -5,7 +5,7 @@ import type { GroupRow } from '../lib/supabase/database.types';
 import { useCharacter } from '../features/characters/api';
 import { useSession } from '../features/auth/useSession';
 import { COC_GRID_ORDER, COC_LABELS } from '../lib/coc/characteristics';
-import { calculateDerived } from '../lib/coc/derived';
+import { calculateDerived, maxSanity } from '../lib/coc/derived';
 import {
   COC_STANDARD_SKILLS,
   COC_SKILL_BY_KEY,
@@ -112,6 +112,9 @@ export function CharacterDetailPage() {
 
 function CoCSheet({ data }: { data: CoCData }) {
   const derived = calculateDerived(data.characteristics, data.info?.age ?? null);
+  const mythos = data.skills.find((s) => s.key === 'cthulhu_mythos');
+  const mythosTotal = mythos ? skillTotal(mythos, data.characteristics) : 0;
+  const sanCap = maxSanity(mythosTotal);
 
   return (
     <>
@@ -141,14 +144,14 @@ function CoCSheet({ data }: { data: CoCData }) {
       <section className="mb-6 rounded-lg border bg-card p-5">
         <h2 className="mb-3 text-sm font-medium text-muted-foreground">자동 계산</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:grid-cols-8">
-          <Stat label="HP" value={derived.hp} />
-          <Stat label="MP" value={derived.mp} />
-          <Stat label="SAN" value={derived.san} />
+          <Stat label="체력" value={derived.hp} />
+          <Stat label="마력" value={derived.mp} />
+          <Stat label="이성" value={`${derived.san} / ${sanCap}`} hint="초기/최대" />
           <Stat label="회피" value={derived.dodge} />
           <Stat label="모국어" value={derived.ownLanguage} />
-          <Stat label="DB" value={derived.damageBonus} />
-          <Stat label="체격" value={derived.build} />
-          <Stat label="이동" value={derived.mov} />
+          <Stat label="피해 보너스" value={derived.damageBonus} />
+          <Stat label="체구" value={derived.build} />
+          <Stat label="이동력" value={derived.mov} />
         </div>
       </section>
 
@@ -268,7 +271,8 @@ function WeaponsSection({ data }: { data: CoCData }) {
               <th className="px-3 py-2 text-left">피해</th>
               <th className="px-3 py-2 text-left">사거리</th>
               <th className="px-3 py-2 text-left">공격횟수</th>
-              <th className="px-3 py-2 text-left">장탄수</th>
+              <th className="px-3 py-2 text-left">탄약</th>
+              <th className="px-3 py-2 text-left">고장</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -288,6 +292,7 @@ function WeaponsSection({ data }: { data: CoCData }) {
                   <td className="px-3 py-2 text-muted-foreground">{w.range ?? '—'}</td>
                   <td className="px-3 py-2 text-muted-foreground">{w.attacks ?? '—'}</td>
                   <td className="px-3 py-2 text-muted-foreground">{w.ammo ?? '—'}</td>
+                  <td className="px-3 py-2 text-muted-foreground">{w.malfunction ?? '—'}</td>
                 </tr>
               );
             })}
@@ -363,11 +368,20 @@ function BackstorySection({ data }: { data: CoCData }) {
   );
 }
 
-function Stat({ label, value }: { label: string; value: number | string }) {
+function Stat({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: number | string;
+  hint?: string;
+}) {
   return (
     <div className="flex flex-col rounded-md border bg-background px-3 py-2 leading-tight">
       <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</span>
       <span className="text-lg font-semibold tabular-nums">{value}</span>
+      {hint && <span className="text-[10px] text-muted-foreground">{hint}</span>}
     </div>
   );
 }

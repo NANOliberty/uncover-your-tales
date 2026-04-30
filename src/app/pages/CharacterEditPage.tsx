@@ -12,7 +12,7 @@ import { useUpdateCharacter } from '../features/characters/mutations';
 import { useSession } from '../features/auth/useSession';
 import { PortraitUploader } from '../features/characters/PortraitUploader';
 import { COC_GRID_ORDER, COC_LABELS } from '../lib/coc/characteristics';
-import { calculateDerived } from '../lib/coc/derived';
+import { calculateDerived, maxSanity } from '../lib/coc/derived';
 import {
   COC_STANDARD_SKILLS,
   COC_SKILL_BY_KEY,
@@ -111,6 +111,11 @@ export function CharacterEditPage() {
     () => calculatePools(characteristics, skills),
     [characteristics, skills],
   );
+  const sanCap = useMemo(() => {
+    const m = skills.find((s) => s.key === 'cthulhu_mythos');
+    const total = m ? skillTotal(m, characteristics) : 0;
+    return maxSanity(total);
+  }, [skills, characteristics]);
 
   if (isLoading) {
     return <div className="mx-auto max-w-7xl px-6 py-8 text-sm text-muted-foreground">불러오는 중…</div>;
@@ -264,14 +269,14 @@ export function CharacterEditPage() {
         <section className="rounded-lg border bg-card p-5">
           <h2 className="mb-3 text-sm font-medium text-muted-foreground">자동 계산</h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:grid-cols-8 text-sm">
-            <Stat label="HP" value={derived.hp} />
-            <Stat label="MP" value={derived.mp} />
-            <Stat label="SAN" value={derived.san} />
+            <Stat label="체력" value={derived.hp} />
+            <Stat label="마력" value={derived.mp} />
+            <Stat label="이성" value={`${derived.san} / ${sanCap}`} hint="초기/최대" />
             <Stat label="회피" value={derived.dodge} />
             <Stat label="모국어" value={derived.ownLanguage} />
-            <Stat label="DB" value={derived.damageBonus} />
-            <Stat label="체격" value={derived.build} />
-            <Stat label="이동" value={derived.mov} />
+            <Stat label="피해 보너스" value={derived.damageBonus} />
+            <Stat label="체구" value={derived.build} />
+            <Stat label="이동력" value={derived.mov} />
           </div>
         </section>
 
@@ -365,12 +370,13 @@ export function CharacterEditPage() {
           <table className="w-full text-sm">
             <thead className="bg-muted/30 text-[10px] uppercase tracking-wider text-muted-foreground">
               <tr>
-                <Th w="22%">무기</Th>
-                <Th w="22%">기능</Th>
-                <Th w="14%">피해</Th>
-                <Th w="12%">사거리</Th>
-                <Th w="11%">공격횟수</Th>
-                <Th w="11%">장탄수</Th>
+                <Th w="20%">무기</Th>
+                <Th w="20%">기능</Th>
+                <Th w="13%">피해</Th>
+                <Th w="10%">사거리</Th>
+                <Th w="10%">공격횟수</Th>
+                <Th w="9%">탄약</Th>
+                <Th w="10%">고장</Th>
                 <th className="w-8" />
               </tr>
             </thead>
@@ -378,7 +384,7 @@ export function CharacterEditPage() {
               {weapons.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="px-3 py-4 text-center text-xs text-muted-foreground"
                   >
                     아직 등록된 무기가 없습니다.
@@ -439,6 +445,17 @@ export function CharacterEditPage() {
                         setWeapons((prev) =>
                           prev.map((x, j) =>
                             j === i ? { ...x, ammo: v || null } : x,
+                          ),
+                        )
+                      }
+                    />
+                    <CellInput
+                      placeholder="98"
+                      value={w.malfunction ?? ''}
+                      onChange={(v) =>
+                        setWeapons((prev) =>
+                          prev.map((x, j) =>
+                            j === i ? { ...x, malfunction: v || null } : x,
                           ),
                         )
                       }
@@ -683,11 +700,20 @@ function BigCharInput({
   );
 }
 
-function Stat({ label, value }: { label: string; value: number | string }) {
+function Stat({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: number | string;
+  hint?: string;
+}) {
   return (
     <div className="flex flex-col rounded-md border bg-background px-3 py-2 leading-tight">
       <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</span>
       <span className="text-lg font-semibold tabular-nums">{value}</span>
+      {hint && <span className="text-[10px] text-muted-foreground">{hint}</span>}
     </div>
   );
 }
