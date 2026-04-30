@@ -297,15 +297,13 @@ export function CharacterEditPage() {
           </div>
         </section>
 
-        {/* 자동 계산 — 풀 폭 banner */}
+        {/* 자동 계산 — 회피·모국어는 기능 섹션에 표시되므로 여기선 6개 */}
         <section className="rounded-lg border bg-card p-5">
           <h2 className="mb-3 text-sm font-medium text-muted-foreground">자동 계산</h2>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:grid-cols-8 text-sm">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6 text-sm">
             <Stat label="체력" value={derived.hp} />
             <Stat label="마력" value={derived.mp} />
             <Stat label="이성" value={`${derived.san} / ${sanCap}`} hint="초기/최대" />
-            <Stat label="회피" value={derived.dodge} />
-            <Stat label="모국어" value={derived.ownLanguage} />
             <Stat label="피해 보너스" value={derived.damageBonus} />
             <Stat label="체구" value={derived.build} />
             <Stat label="이동력" value={derived.mov} />

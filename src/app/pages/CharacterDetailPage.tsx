@@ -248,12 +248,10 @@ function CoCSheet({
         </div>
       </section>
 
-      {/* 파생 — 변하지 않는 5개 (회피·모국어·DB·체구·이동력) */}
+      {/* 파생 — 회피·모국어는 기능 섹션에 표시되므로 여기선 순수 파생 3개만 */}
       <section className="mb-6 rounded-lg border bg-card p-5">
         <h2 className="mb-3 text-sm font-medium text-muted-foreground">파생</h2>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-          <Stat label="회피" value={derived.dodge} />
-          <Stat label="모국어" value={derived.ownLanguage} />
+        <div className="grid grid-cols-3 gap-3">
           <Stat label="피해 보너스" value={derived.damageBonus} />
           <Stat label="체구" value={derived.build} />
           <Stat label="이동력" value={derived.mov} />
