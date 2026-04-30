@@ -134,12 +134,12 @@ export function ScenariosPage() {
               조건과 일치하는 시나리오가 없습니다.
             </p>
           ) : (
-            <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="divide-y rounded-lg border bg-card">
               {filtered.map((s) => (
                 <li key={s.id}>
                   <Link
                     to={s.id}
-                    className="block h-full rounded-lg border bg-card p-4 transition hover:border-primary/40 hover:shadow-sm"
+                    className="block px-4 py-3 transition hover:bg-accent/50"
                   >
                     <div className="flex items-baseline justify-between gap-2">
                       <h3 className="truncate text-base font-medium">{s.title}</h3>
@@ -147,18 +147,19 @@ export function ScenariosPage() {
                         {SYSTEM_LABEL[s.system] ?? s.system}
                       </span>
                     </div>
-                    <p className="mt-1 truncate text-xs text-muted-foreground">
+                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
                       {s.author ?? '작가 미입력'}
                       {s.recommended_players ? ` · ${s.recommended_players}` : ''}
                       {s.expected_play_time ? ` · ${s.expected_play_time}` : ''}
+                      {s.difficulty ? ` · ${s.difficulty}` : ''}
                     </p>
                     {s.description && (
-                      <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+                      <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">
                         {s.description}
                       </p>
                     )}
-                    {(s.genre_tags?.length || s.trigger_warnings?.length) && (
-                      <div className="mt-2 flex flex-wrap gap-1">
+                    {(s.genre_tags?.length || s.trigger_warnings?.length) > 0 && (
+                      <div className="mt-1.5 flex flex-wrap gap-1">
                         {s.genre_tags?.map((t) => (
                           <span
                             key={`g-${t}`}

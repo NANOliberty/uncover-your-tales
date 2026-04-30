@@ -182,7 +182,7 @@ export function CharactersPage() {
               조건과 일치하는 캐릭터가 없습니다.
             </p>
           ) : (
-            <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="divide-y rounded-lg border bg-card">
               {filtered.map((c) => {
                 const isInactive = c.status !== 'active';
                 return (
@@ -190,7 +190,7 @@ export function CharactersPage() {
                     <Link
                       to={c.id}
                       className={[
-                        'flex h-full items-center gap-3 rounded-lg border bg-card p-4 transition hover:border-primary/40 hover:shadow-sm',
+                        'flex items-center gap-3 px-4 py-3 transition hover:bg-accent/50',
                         isInactive && 'opacity-70',
                       ]
                         .filter(Boolean)
@@ -201,14 +201,14 @@ export function CharactersPage() {
                           src={c.portrait_url}
                           alt=""
                           className={[
-                            'h-12 w-12 rounded-md border object-cover',
+                            'h-12 w-12 shrink-0 rounded-md border object-cover',
                             c.status === 'dead' && 'grayscale',
                           ]
                             .filter(Boolean)
                             .join(' ')}
                         />
                       ) : (
-                        <div className="flex h-12 w-12 items-center justify-center rounded-md border bg-muted text-muted-foreground">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border bg-muted text-muted-foreground">
                           <User className="h-5 w-5" />
                         </div>
                       )}
@@ -218,19 +218,19 @@ export function CharactersPage() {
                           {SYSTEM_LABEL[c.system] ?? c.system}
                           {c.occupation ? ` · ${c.occupation}` : ''}
                         </span>
-                        {isInactive && (
-                          <span
-                            className={[
-                              'mt-1 inline-block w-fit rounded-full px-2 py-0.5 text-[10px]',
-                              c.status === 'dead'
-                                ? 'bg-destructive/10 text-destructive'
-                                : 'bg-muted text-muted-foreground',
-                            ].join(' ')}
-                          >
-                            {STATUS_LABEL[c.status]}
-                          </span>
-                        )}
                       </div>
+                      {isInactive && (
+                        <span
+                          className={[
+                            'shrink-0 rounded-full px-2 py-0.5 text-[10px]',
+                            c.status === 'dead'
+                              ? 'bg-destructive/10 text-destructive'
+                              : 'bg-muted text-muted-foreground',
+                          ].join(' ')}
+                        >
+                          {STATUS_LABEL[c.status]}
+                        </span>
+                      )}
                     </Link>
                   </li>
                 );
