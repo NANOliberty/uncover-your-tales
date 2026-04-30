@@ -8,6 +8,7 @@ import type { GroupRow, TrpgSystem } from '../lib/supabase/database.types';
 import { useCreateCharacter } from '../features/characters/mutations';
 import { COC_GRID_ORDER, COC_LABELS } from '../lib/coc/characteristics';
 import { calculateDerived } from '../lib/coc/derived';
+import { COC_OCCUPATIONS } from '../lib/coc/occupations';
 import { emptyCoCData, type CoCCharacteristic, type CoCCharacteristics } from '../lib/coc/types';
 
 interface GroupOutletContext {
@@ -163,8 +164,14 @@ export function CharacterNewPage() {
                 id="occupation"
                 value={occupation}
                 onChange={(e) => setOccupation(e.target.value)}
-                placeholder="예: 사립 탐정, 고서점 점원"
+                placeholder="목록에서 선택 또는 직접 입력"
+                list="coc-occupations"
               />
+              <datalist id="coc-occupations">
+                {COC_OCCUPATIONS.map((o) => (
+                  <option key={o.name} value={o.name} />
+                ))}
+              </datalist>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="age">나이</Label>

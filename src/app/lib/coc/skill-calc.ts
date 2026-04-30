@@ -34,16 +34,26 @@ export interface SkillPools {
   interestRemaining: number;
 }
 
-/** 표준 풀 = EDU × 4 / INT × 2. 향후 직업별 공식이 들어가면 첫 인자 override. */
+/**
+ * 시트의 풀 트래커와 동일.
+ *  - 직업 풀: 직업 카탈로그 공식 (occupation 이름 기반)
+ *  - 관심 풀: INT × 2
+ *  - 시트 메커니즘: 둘이 합쳐 한 풀로 분배. 사용자가 한 칸에 입력하면 occupation 에 누적.
+ */
+import { occupationPool } from './occupations';
+
 export function calculatePools(
   c: CoCCharacteristics,
   skills: CoCSkill[],
-  occupationFormula?: (c: CoCCharacteristics) => number,
-): SkillPools {
-  const occupationMax = occupationFormula ? occupationFormula(c) : c.EDU * 4;
+  occupation?: string | null,
+): SkillPools & { occupationMatched: boolean; total: number; totalUsed: number; totalRemaining: number } {
+  const occ = occupationPool(occupation, c);
+  const occupationMax = occ.value;
   const interestMax = c.INT * 2;
   const occupationUsed = skills.reduce((acc, s) => acc + (s.occupation || 0), 0);
   const interestUsed = skills.reduce((acc, s) => acc + (s.interest || 0), 0);
+  const total = occupationMax + interestMax;
+  const totalUsed = occupationUsed + interestUsed;
   return {
     occupationMax,
     interestMax,
@@ -51,5 +61,9 @@ export function calculatePools(
     interestUsed,
     occupationRemaining: occupationMax - occupationUsed,
     interestRemaining: interestMax - interestUsed,
+    occupationMatched: occ.matched,
+    total,
+    totalUsed,
+    totalRemaining: total - totalUsed,
   };
 }

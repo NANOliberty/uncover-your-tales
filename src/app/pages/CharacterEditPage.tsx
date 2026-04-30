@@ -19,6 +19,7 @@ import {
   SKILL_CATEGORY_ORDER,
   type SkillCategory,
 } from '../lib/coc/skills';
+import { COC_OCCUPATIONS } from '../lib/coc/occupations';
 import { calculatePools, skillBase, skillTotal } from '../lib/coc/skill-calc';
 import {
   emptyCoCData,
@@ -97,14 +98,26 @@ export function CharacterEditPage() {
     setStatus(data.status ?? {});
     setCharacteristics({ ...emptyCoCData().characteristics, ...(data.characteristics ?? {}) });
     const saved = new Map<string, CoCSkill>((data.skills ?? []).map((s) => [s.key, s]));
-    const merged: CoCSkill[] = COC_STANDARD_SKILLS.map((def) => ({
-      key: def.key,
-      name: def.name,
-      occupation: saved.get(def.key)?.occupation ?? 0,
-      interest: saved.get(def.key)?.interest ?? 0,
-    }));
+    // 통합 풀 모델: 기존에 직업/관심 분리 저장돼 있던 데이터는 occupation 으로 합쳐 표시.
+    // (interest 는 항상 0 으로 유지. 합계 계산엔 둘 다 더하므로 보존됨)
+    const merged: CoCSkill[] = COC_STANDARD_SKILLS.map((def) => {
+      const prev = saved.get(def.key);
+      return {
+        key: def.key,
+        name: def.name,
+        occupation: (prev?.occupation ?? 0) + (prev?.interest ?? 0),
+        interest: 0,
+      };
+    });
     for (const s of data.skills ?? []) {
-      if (!COC_SKILL_BY_KEY.has(s.key)) merged.push({ ...s, custom: true });
+      if (!COC_SKILL_BY_KEY.has(s.key)) {
+        merged.push({
+          ...s,
+          occupation: (s.occupation ?? 0) + (s.interest ?? 0),
+          interest: 0,
+          custom: true,
+        });
+      }
     }
     setSkills(merged);
     setWeapons(data.weapons ?? []);
@@ -119,8 +132,8 @@ export function CharacterEditPage() {
     [characteristics, age],
   );
   const pools = useMemo(
-    () => calculatePools(characteristics, skills),
-    [characteristics, skills],
+    () => calculatePools(characteristics, skills, occupation),
+    [characteristics, skills, occupation],
   );
   const sanCap = useMemo(() => {
     const m = skills.find((s) => s.key === 'cthulhu_mythos');
@@ -235,7 +248,17 @@ export function CharacterEditPage() {
                 <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={100} />
               </Field>
               <Field label="직업">
-                <Input value={occupation} onChange={(e) => setOccupation(e.target.value)} />
+                <Input
+                  value={occupation}
+                  onChange={(e) => setOccupation(e.target.value)}
+                  list="coc-occupations"
+                  placeholder="목록에서 선택 또는 직접 입력"
+                />
+                <datalist id="coc-occupations">
+                  {COC_OCCUPATIONS.map((o) => (
+                    <option key={o.name} value={o.name} />
+                  ))}
+                </datalist>
               </Field>
               <Field label="나이">
                 <Input
@@ -342,8 +365,17 @@ export function CharacterEditPage() {
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-sm font-medium text-muted-foreground">기능</h2>
             <div className="flex flex-wrap items-center gap-3 text-xs">
-              <Pool label="직업" hint="EDU×4" used={pools.occupationUsed} max={pools.occupationMax} />
-              <Pool label="흥미" hint="INT×2" used={pools.interestUsed} max={pools.interestMax} />
+              <PoolStat
+                label="직업기능점수"
+                hint={pools.occupationMatched ? `${occupation} 공식` : 'EDU×4 (기본)'}
+                value={pools.occupationMax}
+              />
+              <PoolStat label="관심기능점수" hint="INT×2" value={pools.interestMax} />
+              <PoolStat
+                label="남은 점수"
+                value={pools.totalRemaining}
+                negative={pools.totalRemaining < 0}
+              />
               <Button type="button" size="sm" variant="outline" onClick={addCustomSkill}>
                 <Plus className="mr-1 h-3 w-3" />
                 기능 추가
@@ -362,12 +394,13 @@ export function CharacterEditPage() {
                     const base = skillBase(s.key, characteristics);
                     const total = skillTotal(s, characteristics);
                     const def = COC_SKILL_BY_KEY.get(s.key);
+                    // 시트와 동일하게 직업/관심 통합 풀 — 한 칸 입력. 내부에선 occupation 에 누적.
                     return (
                       <li
                         key={s.key}
                         className="grid grid-cols-12 items-center gap-1 px-2 py-1.5 text-xs"
                       >
-                        <div className="col-span-5 flex min-w-0 items-center gap-1">
+                        <div className="col-span-7 flex min-w-0 items-center gap-1">
                           <span className="truncate" title={s.name}>
                             {s.name}
                           </span>
@@ -394,10 +427,6 @@ export function CharacterEditPage() {
                           value={s.occupation}
                           onChange={(v) => updateSkill(s.key, { occupation: v })}
                         />
-                        <NumInput
-                          value={s.interest}
-                          onChange={(v) => updateSkill(s.key, { interest: v })}
-                        />
                         <span className="col-span-2 text-right text-sm font-medium tabular-nums">
                           {total}
                         </span>
@@ -409,7 +438,8 @@ export function CharacterEditPage() {
             ))}
           </div>
           <p className="mt-3 text-[11px] text-muted-foreground">
-            열 순서: 기능 / 기본 / 직업 / 흥미 / 합계. 회피·모국어는 능력치 변경 시 기본값이 즉시 갱신됩니다.
+            열 순서: 기능 / 기본 / 분배 / 합계. 시트와 동일하게 직업·관심 풀을 한 칸에 통합 분배합니다.
+            회피·모국어는 능력치 변경 시 기본값이 즉시 갱신됩니다.
           </p>
         </section>
 
@@ -826,6 +856,30 @@ function NumInput({ value, onChange }: { value: number; onChange: (v: number) =>
       onChange={(e) => onChange(Math.max(0, Math.min(99, Number(e.target.value) || 0)))}
       className="col-span-2 w-full bg-transparent text-center text-xs tabular-nums outline-none"
     />
+  );
+}
+
+function PoolStat({
+  label,
+  hint,
+  value,
+  negative,
+}: {
+  label: string;
+  hint?: string;
+  value: number;
+  negative?: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-1.5 rounded-md border bg-background px-2 py-1">
+      <span className="text-[10px] text-muted-foreground">
+        {label}
+        {hint && <span className="opacity-60"> · {hint}</span>}
+      </span>
+      <span className={`tabular-nums ${negative ? 'text-destructive' : 'font-semibold'}`}>
+        {value}
+      </span>
+    </div>
   );
 }
 
