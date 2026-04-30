@@ -40,7 +40,7 @@ export function GroupShell() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-6xl px-6 py-8 text-sm text-muted-foreground">
+      <div className="mx-auto max-w-7xl px-6 py-8 text-sm text-muted-foreground">
         그룹 정보 불러오는 중…
       </div>
     );
@@ -53,7 +53,7 @@ export function GroupShell() {
   return (
     <div className="flex flex-col">
       <div className="border-b">
-        <div className="mx-auto flex max-w-6xl flex-col gap-2 px-6 py-3">
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-6 py-3">
           <div className="flex items-center gap-3">
             {isSolo ? (
               <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary">

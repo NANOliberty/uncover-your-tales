@@ -51,7 +51,7 @@ export function HomePage() {
     : '로그인하고 시작하기 →';
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-10">
+    <div className="mx-auto max-w-7xl px-6 py-10">
       <header className="mb-8">
         <p className="text-sm text-muted-foreground">Uncover Your Tales</p>
         <h1 className="mt-1 text-3xl font-semibold tracking-tight">

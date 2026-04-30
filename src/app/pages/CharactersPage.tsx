@@ -29,7 +29,7 @@ export function CharactersPage() {
   const { data: characters = [], isLoading } = useGroupCharacters(group.id);
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-8">
+    <div className="mx-auto max-w-7xl px-6 py-8">
       <header className="mb-6 flex items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-semibold tracking-tight">캐릭터</h2>
