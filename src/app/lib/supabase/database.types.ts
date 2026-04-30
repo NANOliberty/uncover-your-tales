@@ -165,8 +165,7 @@ export type Database = {
           },
         ];
       };
-      characters: {
-        Row: {
+      characters: {        Row: {
           id: string;
           group_id: string;
           owner_id: string;
@@ -208,6 +207,79 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: 'characters_group_id_fkey';
+            columns: ['group_id'];
+            referencedRelation: 'groups';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      scenarios: {
+        Row: {
+          id: string;
+          group_id: string;
+          owner_id: string;
+          system: Database['public']['Enums']['trpg_system'];
+          title: string;
+          author: string | null;
+          description: string | null;
+          recommended_players: string | null;
+          expected_play_time: string | null;
+          difficulty: string | null;
+          genre_tags: string[];
+          trigger_warnings: string[];
+          handout: string | null;
+          bgm_recommendation: string | null;
+          cover_url: string | null;
+          gm_only: Json;
+          data: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          group_id: string;
+          owner_id?: string;
+          system: Database['public']['Enums']['trpg_system'];
+          title: string;
+          author?: string | null;
+          description?: string | null;
+          recommended_players?: string | null;
+          expected_play_time?: string | null;
+          difficulty?: string | null;
+          genre_tags?: string[];
+          trigger_warnings?: string[];
+          handout?: string | null;
+          bgm_recommendation?: string | null;
+          cover_url?: string | null;
+          gm_only?: Json;
+          data?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          group_id?: string;
+          owner_id?: string;
+          system?: Database['public']['Enums']['trpg_system'];
+          title?: string;
+          author?: string | null;
+          description?: string | null;
+          recommended_players?: string | null;
+          expected_play_time?: string | null;
+          difficulty?: string | null;
+          genre_tags?: string[];
+          trigger_warnings?: string[];
+          handout?: string | null;
+          bgm_recommendation?: string | null;
+          cover_url?: string | null;
+          gm_only?: Json;
+          data?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'scenarios_group_id_fkey';
             columns: ['group_id'];
             referencedRelation: 'groups';
             referencedColumns: ['id'];
@@ -262,6 +334,25 @@ export type Database = {
         };
         Returns: Database['public']['Tables']['characters']['Row'];
       };
+      create_scenario_rpc: {
+        Args: {
+          p_group_id: string;
+          p_system: Database['public']['Enums']['trpg_system'];
+          p_title: string;
+          p_author?: string | null;
+          p_description?: string | null;
+          p_recommended_players?: string | null;
+          p_expected_play_time?: string | null;
+          p_difficulty?: string | null;
+          p_genre_tags?: string[];
+          p_trigger_warnings?: string[];
+          p_handout?: string | null;
+          p_bgm_recommendation?: string | null;
+          p_gm_only?: Json;
+          p_data?: Json;
+        };
+        Returns: Database['public']['Tables']['scenarios']['Row'];
+      };
     };
     Enums: {
       group_role: 'admin' | 'member' | 'guest';
@@ -279,6 +370,7 @@ export type GroupRow = Database['public']['Tables']['groups']['Row'];
 export type GroupMemberRow = Database['public']['Tables']['group_members']['Row'];
 export type GroupInvitationRow = Database['public']['Tables']['group_invitations']['Row'];
 export type CharacterRow = Database['public']['Tables']['characters']['Row'];
+export type ScenarioRow = Database['public']['Tables']['scenarios']['Row'];
 export type GroupRole = Database['public']['Enums']['group_role'];
 export type GroupVisibility = Database['public']['Enums']['group_visibility'];
 export type TrpgSystem = Database['public']['Enums']['trpg_system'];

@@ -11,6 +11,9 @@ import { CharacterNewPage } from './pages/CharacterNewPage';
 import { CharacterDetailPage } from './pages/CharacterDetailPage';
 import { CharacterEditPage } from './pages/CharacterEditPage';
 import { ScenariosPage } from './pages/ScenariosPage';
+import { ScenarioNewPage } from './pages/ScenarioNewPage';
+import { ScenarioDetailPage } from './pages/ScenarioDetailPage';
+import { ScenarioEditPage } from './pages/ScenarioEditPage';
 import { SessionsPage } from './pages/SessionsPage';
 import { RelationsPage } from './pages/RelationsPage';
 import { RecruitmentPage } from './pages/RecruitmentPage';
@@ -47,6 +50,9 @@ export const router = createBrowserRouter([
               { path: 'characters/:characterId', Component: CharacterDetailPage },
               { path: 'characters/:characterId/edit', Component: CharacterEditPage },
               { path: 'scenarios', Component: ScenariosPage },
+              { path: 'scenarios/new', Component: ScenarioNewPage },
+              { path: 'scenarios/:scenarioId', Component: ScenarioDetailPage },
+              { path: 'scenarios/:scenarioId/edit', Component: ScenarioEditPage },
               { path: 'sessions', Component: SessionsPage },
               { path: 'relations', Component: RelationsPage },
               { path: 'recruitment', Component: RecruitmentPage },
