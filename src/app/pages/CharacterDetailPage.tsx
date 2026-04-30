@@ -8,7 +8,7 @@ import { useCharacter } from '../features/characters/api';
 import { useUpdateCharacter } from '../features/characters/mutations';
 import { KokoroforiaExportDialog } from '../features/characters/KokoroforiaExportDialog';
 import { useSession } from '../features/auth/useSession';
-import { COC_GRID_ORDER, COC_LABELS } from '../lib/coc/characteristics';
+import { COC_GRID_ORDER, COC_LABELS, fullLabel } from '../lib/coc/characteristics';
 import { calculateDerived, calculateWealth, maxSanity } from '../lib/coc/derived';
 import {
   COC_STANDARD_SKILLS,
@@ -95,41 +95,18 @@ export function CharacterDetailPage() {
         </div>
       </div>
 
-      {/* 헤더 */}
-      <header className="mb-6 flex flex-col gap-4 rounded-lg border bg-card p-5 sm:flex-row sm:items-start">
-        {character.portrait_url ? (
-          <img
-            src={character.portrait_url}
-            alt=""
-            className="h-28 w-28 shrink-0 rounded-lg border object-cover"
-          />
-        ) : (
-          <div className="flex h-28 w-28 shrink-0 items-center justify-center rounded-lg border bg-muted text-muted-foreground">
-            <User className="h-10 w-10" />
-          </div>
-        )}
-        <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{character.name}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {character.occupation ?? '직업 미입력'}
-            {data.info?.age != null ? ` · ${data.info.age}세` : ''}
-            {data.info?.gender ? ` · ${data.info.gender}` : ''}
-            {data.info?.residence ? ` · ${data.info.residence}` : ''}
-            {data.info?.birthplace ? ` · ${data.info.birthplace} 출신` : ''}
-            {data.info?.nationality ? ` · ${data.info.nationality}` : ''}
-            {data.info?.era ? ` · ${data.info.era}` : ''}
-            {data.info?.heightWeight ? ` · ${data.info.heightWeight}` : ''}
-          </p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            <Badge>{character.system === 'coc7' ? 'CoC 7판' : character.system}</Badge>
-            <Badge>{STATUS_LABEL[character.status] ?? character.status}</Badge>
-            {group.is_solo && <Badge accent>내 작업실</Badge>}
-          </div>
-        </div>
-      </header>
-
-      {isCoC && data.characteristics && (
-        <CoCSheet character={character} data={data as CoCData} isOwner={isOwner} />
+      {isCoC && data.characteristics ? (
+        <CoCSheet
+          character={character}
+          data={data as CoCData}
+          isOwner={isOwner}
+          inSoloGroup={group.is_solo}
+        />
+      ) : (
+        // CoC 가 아닌 시스템 — 향후 분기. 임시 헤더만.
+        <header className="mb-6 flex flex-col gap-4 rounded-lg border bg-card p-5">
+          <h1 className="text-2xl font-semibold tracking-tight">{character.name}</h1>
+        </header>
       )}
     </div>
   );
@@ -139,10 +116,12 @@ function CoCSheet({
   character,
   data,
   isOwner,
+  inSoloGroup,
 }: {
   character: CharacterRow;
   data: CoCData;
   isOwner: boolean;
+  inSoloGroup: boolean;
 }) {
   const derived = calculateDerived(data.characteristics, data.info?.age ?? null);
   const mythos = data.skills.find((s) => s.key === 'cthulhu_mythos');
@@ -177,25 +156,27 @@ function CoCSheet({
 
   return (
     <>
-      {/* 능력치 — 풀 폭 */}
-      <section className="mb-6 rounded-lg border bg-card p-5">
-        <h2 className="mb-3 text-sm font-medium text-muted-foreground">능력치</h2>
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-3 md:grid-cols-9">
-          {COC_GRID_ORDER.map((key) => {
-            const v = data.characteristics[key];
-            const label = COC_LABELS[key];
-            return (
-              <div key={key} className="rounded-md border bg-background px-3 py-2">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                  {key} · {label.ko}
-                </p>
-                <p className="mt-0.5 text-3xl font-semibold tabular-nums">{v}</p>
-                <p className="font-mono text-[10px] text-muted-foreground tabular-nums">
-                  {v} / {Math.floor(v / 2)} / {Math.floor(v / 5)}
-                </p>
-              </div>
-            );
-          })}
+      {/* 헤더 + 특성치 — 좌: 일러스트·기본정보, 우: 3x3 특성치 그리드 */}
+      <section className="mb-6 grid gap-6 rounded-lg border bg-card p-5 lg:grid-cols-2">
+        <ProfileBlock character={character} data={data} inSoloGroup={inSoloGroup} />
+        <div>
+          <h2 className="mb-3 text-sm font-medium text-muted-foreground">특성치</h2>
+          <div className="grid grid-cols-3 gap-2">
+            {COC_GRID_ORDER.map((key) => {
+              const v = data.characteristics[key];
+              return (
+                <div key={key} className="rounded-md border bg-background px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    {key} · {fullLabel(key)}
+                  </p>
+                  <p className="mt-0.5 text-3xl font-semibold tabular-nums">{v}</p>
+                  <p className="font-mono text-[10px] text-muted-foreground tabular-nums">
+                    {v} / {Math.floor(v / 2)} / {Math.floor(v / 5)}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </section>
 
@@ -273,9 +254,9 @@ function CoCSheet({
         </div>
       </section>
 
-      <WealthPanel data={data} />
       <SkillsSection data={data} />
       <WeaponsSection data={data} />
+      <WealthPanel data={data} />
 
       <div className="mb-6 grid gap-4 lg:grid-cols-2">
         <SpellsSection data={data} />
@@ -295,6 +276,63 @@ function CoCSheet({
         코코포리아 채팅팔레트 export 는 M2.6 에서 추가됩니다.
       </p>
     </>
+  );
+}
+
+/** 일러스트 + 기본 정보 세로 리스트. 헤더+특성치 박스의 좌측 절반. */
+function ProfileBlock({
+  character,
+  data,
+  inSoloGroup,
+}: {
+  character: CharacterRow;
+  data: CoCData;
+  inSoloGroup: boolean;
+}) {
+  const info = data.info ?? {};
+  const rows: { label: string; value: string | number | null | undefined }[] = [
+    { label: '직업', value: character.occupation },
+    { label: '나이', value: info.age != null ? `${info.age}세` : null },
+    { label: '성별', value: info.gender },
+    { label: '거주지', value: info.residence },
+    { label: '출신지', value: info.birthplace },
+    { label: '국적', value: info.nationality },
+    { label: '시대', value: info.era },
+    { label: '키 / 몸무게', value: info.heightWeight },
+  ];
+
+  return (
+    <div className="flex gap-4">
+      {character.portrait_url ? (
+        <img
+          src={character.portrait_url}
+          alt=""
+          className="h-44 w-44 shrink-0 rounded-lg border object-cover sm:h-48 sm:w-48"
+        />
+      ) : (
+        <div className="flex h-44 w-44 shrink-0 items-center justify-center rounded-lg border bg-muted text-muted-foreground sm:h-48 sm:w-48">
+          <User className="h-16 w-16" />
+        </div>
+      )}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{character.name}</h1>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          <Badge>{character.system === 'coc7' ? 'CoC 7판' : character.system}</Badge>
+          <Badge>{STATUS_LABEL[character.status] ?? character.status}</Badge>
+          {inSoloGroup && <Badge accent>내 작업실</Badge>}
+        </div>
+        <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-sm">
+          {rows.map((r) => (
+            <div key={r.label} className="contents">
+              <dt className="text-xs text-muted-foreground">{r.label}</dt>
+              <dd className={r.value ? '' : 'text-muted-foreground/60'}>
+                {r.value || '—'}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </div>
   );
 }
 

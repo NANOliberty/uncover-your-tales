@@ -11,7 +11,7 @@ import { useCharacter } from '../features/characters/api';
 import { useUpdateCharacter } from '../features/characters/mutations';
 import { useSession } from '../features/auth/useSession';
 import { PortraitUploader } from '../features/characters/PortraitUploader';
-import { COC_GRID_ORDER, COC_LABELS } from '../lib/coc/characteristics';
+import { COC_GRID_ORDER, fullLabel } from '../lib/coc/characteristics';
 import { calculateDerived, maxSanity } from '../lib/coc/derived';
 import {
   COC_STANDARD_SKILLS,
@@ -307,7 +307,7 @@ export function CharacterEditPage() {
 
         {/* 능력치 — 풀 폭 */}
         <section className="rounded-lg border bg-card p-5">
-          <h2 className="mb-3 text-sm font-medium text-muted-foreground">능력치</h2>
+          <h2 className="mb-3 text-sm font-medium text-muted-foreground">특성치</h2>
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-3 md:grid-cols-9">
             {COC_GRID_ORDER.map((key) => (
               <BigCharInput
@@ -439,7 +439,7 @@ export function CharacterEditPage() {
           </div>
           <p className="mt-3 text-[11px] text-muted-foreground">
             열 순서: 기능 / 기본 / 분배 / 합계. 시트와 동일하게 직업·관심 풀을 한 칸에 통합 분배합니다.
-            회피·모국어는 능력치 변경 시 기본값이 즉시 갱신됩니다.
+            회피·모국어는 특성치 변경 시 기본값이 즉시 갱신됩니다.
           </p>
         </section>
 
@@ -778,11 +778,10 @@ function BigCharInput({
   value: number;
   onChange: (v: number) => void;
 }) {
-  const label = COC_LABELS[code];
   return (
     <label className="flex flex-col gap-0.5 rounded-md border bg-card px-3 py-2 hover:border-primary/40">
       <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-        {code} · {label.ko}
+        {code} · {fullLabel(code)}
       </span>
       <input
         type="number"

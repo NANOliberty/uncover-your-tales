@@ -6,7 +6,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import type { GroupRow, TrpgSystem } from '../lib/supabase/database.types';
 import { useCreateCharacter } from '../features/characters/mutations';
-import { COC_GRID_ORDER, COC_LABELS } from '../lib/coc/characteristics';
+import { COC_GRID_ORDER, fullLabel } from '../lib/coc/characteristics';
 import { calculateDerived } from '../lib/coc/derived';
 import { COC_OCCUPATIONS } from '../lib/coc/occupations';
 import { emptyCoCData, type CoCCharacteristic, type CoCCharacteristics } from '../lib/coc/types';
@@ -61,7 +61,7 @@ export function CharacterNewPage() {
     const next: FieldErrors = {};
     if (!name.trim()) next.name = '이름을 입력하세요';
     if (Object.values(characteristics).some((v) => v < 1 || v > 99)) {
-      next.characteristics = '능력치는 1~99 사이여야 합니다';
+      next.characteristics = '특성치는 1~99 사이여야 합니다';
     }
     setErrors(next);
     if (Object.keys(next).length > 0) return;
@@ -108,7 +108,7 @@ export function CharacterNewPage() {
         <p className="text-sm text-muted-foreground">{group.is_solo ? '내 작업실' : group.name}</p>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">새 캐릭터</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          능력치를 입력하면 HP·MP·이성·이동력 등이 자동 계산됩니다.
+          특성치를 입력하면 HP·MP·이성·이동력 등이 자동 계산됩니다.
         </p>
       </header>
 
@@ -212,7 +212,7 @@ export function CharacterNewPage() {
 
         {/* 능력치 */}
         <section>
-          <h2 className="mb-2 text-sm font-medium">능력치</h2>
+          <h2 className="mb-2 text-sm font-medium">특성치</h2>
           <p className="mb-3 text-xs text-muted-foreground">
             1~99 사이로 입력하세요. STR/DEX/CON/APP/POW = 3d6×5, SIZ/INT/EDU = (2d6+6)×5, LUCK = 3d6×5 굴림이 표준입니다.
           </p>
@@ -268,11 +268,10 @@ function CharacteristicInput({
   value: number;
   onChange: (v: string) => void;
 }) {
-  const label = COC_LABELS[code];
   return (
     <label className="flex flex-col gap-1 rounded-md border bg-card px-3 py-2">
       <span className="text-[11px] uppercase tracking-wider text-muted-foreground">
-        {code} · {label.ko}
+        {code} · {fullLabel(code)}
       </span>
       <input
         type="number"
