@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useOutletContext, useParams } from 'react-router';
-import { ArrowLeft, Minus, Pencil, Plus, User } from 'lucide-react';
+import { ArrowLeft, Download, Minus, Pencil, Plus, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/button';
 import type { CharacterRow, GroupRow } from '../lib/supabase/database.types';
 import { useCharacter } from '../features/characters/api';
 import { useUpdateCharacter } from '../features/characters/mutations';
+import { KokoroforiaExportDialog } from '../features/characters/KokoroforiaExportDialog';
 import { useSession } from '../features/auth/useSession';
 import { COC_GRID_ORDER, COC_LABELS } from '../lib/coc/characteristics';
 import { calculateDerived, calculateWealth, maxSanity } from '../lib/coc/derived';
@@ -70,14 +71,28 @@ export function CharacterDetailPage() {
             목록
           </Link>
         </Button>
-        {isOwner && (
-          <Button asChild size="sm">
-            <Link to="edit">
-              <Pencil className="mr-1 h-3 w-3" />
-              편집
-            </Link>
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {isCoC && (
+            <KokoroforiaExportDialog
+              characterName={character.name}
+              data={data as CoCData}
+              trigger={
+                <Button type="button" size="sm" variant="outline">
+                  <Download className="mr-1 h-3 w-3" />
+                  코코포리아 팔레트
+                </Button>
+              }
+            />
+          )}
+          {isOwner && (
+            <Button asChild size="sm">
+              <Link to="edit">
+                <Pencil className="mr-1 h-3 w-3" />
+                편집
+              </Link>
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* 헤더 */}
