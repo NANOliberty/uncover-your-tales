@@ -31,6 +31,17 @@ export function useMyGroups() {
   });
 }
 
+/**
+ * 내가 속한 그룹을 "내 작업실(solo)" 과 "공유 그룹(shared)" 로 분리해서 반환.
+ * UI 가 거의 항상 둘을 다르게 표현하므로 메모이즈 한 번에 둘 다 꺼낼 수 있게.
+ */
+export function useGroupSplit() {
+  const { data, ...rest } = useMyGroups();
+  const personal = (data ?? []).find((g) => g.is_solo) ?? null;
+  const shared = (data ?? []).filter((g) => !g.is_solo);
+  return { personal, shared, ...rest };
+}
+
 export function useGroupBySlug(slug: string | undefined) {
   const { user, isLoading: sessionLoading } = useSession();
 

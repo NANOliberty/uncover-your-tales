@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useOutletContext } from 'react-router';
+import { Navigate, useOutletContext } from 'react-router';
 import { toast } from 'sonner';
 import { Copy, RefreshCw } from 'lucide-react';
 import { Button } from '../components/ui/button';
@@ -25,6 +25,11 @@ export function GroupSettingsPage() {
   const { user } = useSession();
   const issue = useIssueInvite();
   const { data: invites = [], isLoading } = useActiveInvites(group.id);
+
+  // 개인 작업실은 초대/멤버 관리 의미가 없음. 그룹 메인으로 돌려보냄.
+  if (group.is_solo) {
+    return <Navigate to={`/g/${group.slug}`} replace />;
+  }
 
   const [maxUses, setMaxUses] = useState(1);
   const [defaultRole, setDefaultRole] = useState<'member' | 'guest'>('member');

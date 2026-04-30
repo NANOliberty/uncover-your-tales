@@ -2,6 +2,7 @@ import { Link } from 'react-router';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { useSession } from '../features/auth/useSession';
+import { useGroupSplit } from '../features/groups/api';
 
 const features = [
   {
@@ -33,6 +34,21 @@ const features = [
 
 export function HomePage() {
   const { user, isLoading } = useSession();
+  const { personal, shared } = useGroupSplit();
+
+  // 인증된 사용자의 기본 진입지 결정 — 공유 그룹이 있으면 허브, 없으면 작업실 바로.
+  const primaryHref = user
+    ? shared.length > 0
+      ? '/groups'
+      : personal
+        ? `/g/${personal.slug}`
+        : '/groups'
+    : '/auth/login';
+  const primaryLabel = user
+    ? shared.length > 0
+      ? '내 그룹으로 →'
+      : '내 작업실로 →'
+    : '로그인하고 시작하기 →';
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-10">
@@ -47,15 +63,9 @@ export function HomePage() {
 
         {!isLoading && (
           <div className="mt-6">
-            {user ? (
-              <Button asChild>
-                <Link to="/groups">내 그룹으로 →</Link>
-              </Button>
-            ) : (
-              <Button asChild>
-                <Link to="/auth/login">로그인하고 시작하기 →</Link>
-              </Button>
-            )}
+            <Button asChild>
+              <Link to={primaryHref}>{primaryLabel}</Link>
+            </Button>
           </div>
         )}
       </header>

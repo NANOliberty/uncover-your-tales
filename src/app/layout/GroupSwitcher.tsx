@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from 'react-router';
-import { ChevronsUpDown, Check, Plus } from 'lucide-react';
+import { ChevronsUpDown, Check, Plus, Sparkles } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,59 +8,84 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
-import { useMyGroups } from '../features/groups/api';
+import { useGroupSplit } from '../features/groups/api';
 import { useSession } from '../features/auth/useSession';
 
 /**
  * 헤더의 그룹 스위처. 인증된 사용자에게만 노출.
- * - 현재 URL 의 :slug 와 매칭되는 그룹을 활성으로 표시
- * - 드롭다운에서 다른 그룹을 고르면 같은 sub-route 로 이동 (가능하면)
+ * - 내 작업실 (solo) 가 위, 공유 그룹은 아래
+ * - 현재 URL :slug 와 매칭되는 그룹을 활성으로 표시
+ * - 다른 그룹으로 이동 시 같은 sub-route 유지 (가능하면)
  */
 export function GroupSwitcher() {
   const { user } = useSession();
   const navigate = useNavigate();
   const { slug: activeSlug } = useParams<{ slug: string }>();
-  const { data: groups = [], isLoading } = useMyGroups();
+  const { personal, shared, isLoading } = useGroupSplit();
 
   if (!user) return null;
 
-  const active = groups.find((g) => g.slug === activeSlug);
+  const allGroups = personal ? [personal, ...shared] : shared;
+  const active = allGroups.find((g) => g.slug === activeSlug);
+  const activeLabel = active
+    ? active.is_solo
+      ? '내 작업실'
+      : active.name
+    : isLoading
+      ? '…'
+      : '선택';
 
   const switchTo = (slug: string) => {
-    // 현재 그룹 컨텍스트 안이면 같은 sub-route 유지, 아니면 그룹 루트로.
     const path = window.location.pathname;
-    const sub = activeSlug && path.startsWith(`/g/${activeSlug}/`)
-      ? path.slice(`/g/${activeSlug}`.length)
-      : '';
+    const sub =
+      activeSlug && path.startsWith(`/g/${activeSlug}/`)
+        ? path.slice(`/g/${activeSlug}`.length)
+        : '';
     navigate(`/g/${slug}${sub}`);
   };
 
-  const trigger = (
-    <button
-      type="button"
-      className="flex items-center gap-2 rounded-full border bg-card px-3 py-1 text-xs hover:bg-accent"
-    >
-      <span className="text-muted-foreground">그룹</span>
-      <span className="font-medium">
-        {active ? active.name : groups.length === 0 ? '없음' : '선택'}
-      </span>
-      <ChevronsUpDown className="h-3 w-3 text-muted-foreground" />
-    </button>
-  );
-
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="flex items-center gap-2 rounded-full border bg-card px-3 py-1 text-xs hover:bg-accent"
+        >
+          <span className="text-muted-foreground">그룹</span>
+          <span className="font-medium">{activeLabel}</span>
+          <ChevronsUpDown className="h-3 w-3 text-muted-foreground" />
+        </button>
+      </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">
+        {personal && (
+          <>
+            <DropdownMenuLabel className="text-xs text-muted-foreground">
+              개인 작업실
+            </DropdownMenuLabel>
+            <DropdownMenuItem onSelect={() => switchTo(personal.slug)}>
+              <div className="flex flex-1 items-center gap-2">
+                <div className="flex h-6 w-6 items-center justify-center rounded bg-primary/10 text-primary">
+                  <Sparkles className="h-3 w-3" />
+                </div>
+                <span className="flex-1 text-sm">내 작업실</span>
+                {personal.slug === activeSlug && (
+                  <Check className="h-4 w-4 text-muted-foreground" />
+                )}
+              </div>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
+
         <DropdownMenuLabel className="text-xs text-muted-foreground">
-          내 그룹 {isLoading && '…'}
+          함께하는 그룹 {isLoading && '…'}
         </DropdownMenuLabel>
-        {groups.length === 0 && !isLoading && (
-          <div className="px-2 py-3 text-xs text-muted-foreground">
-            아직 소속된 그룹이 없습니다.
+        {shared.length === 0 && !isLoading && (
+          <div className="px-2 py-2 text-xs text-muted-foreground">
+            아직 함께하는 그룹이 없습니다.
           </div>
         )}
-        {groups.map((g) => (
+        {shared.map((g) => (
           <DropdownMenuItem key={g.id} onSelect={() => switchTo(g.slug)}>
             <div className="flex flex-1 items-center gap-2">
               <div className="flex h-6 w-6 items-center justify-center rounded border bg-muted text-[10px] font-medium text-muted-foreground">
@@ -75,9 +100,12 @@ export function GroupSwitcher() {
           </DropdownMenuItem>
         ))}
         <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={() => navigate('/groups')}>
+        <DropdownMenuItem onSelect={() => navigate('/groups/new')}>
           <Plus className="mr-2 h-4 w-4" />
-          그룹 만들기 / 참여 (M1.4)
+          새 그룹 만들기
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => navigate('/groups/join')}>
+          초대 코드 입력
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

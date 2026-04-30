@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Navigate, NavLink, Outlet, useParams } from 'react-router';
+import { Sparkles } from 'lucide-react';
 import { useActiveGroupStore } from '../features/groups/active-group-store';
 import { useGroupBySlug, useMyMembership } from '../features/groups/api';
 
@@ -8,13 +9,20 @@ import { useGroupBySlug, useMyMembership } from '../features/groups/api';
  * - 슬러그를 검증한다 — 존재하지 않거나 RLS 로 막히면 /groups 로.
  * - 그룹 정보(이름, 로고)를 표시한다.
  * - 활성 슬러그를 영속 스토어에 동기화 — 다음 방문 시 마지막 그룹으로 부드럽게 복귀.
+ * - solo group(개인 작업실) 은 표기를 다르게 하고 설정/구인 같은 무의미한 탭은 숨긴다.
  */
-const subnav = [
+const sharedSubnav = [
   { to: 'characters', label: '캐릭터' },
   { to: 'scenarios', label: '시나리오' },
   { to: 'sessions', label: '세션 기록' },
   { to: 'relations', label: '관계 맵' },
   { to: 'recruitment', label: '구인' },
+];
+
+const soloSubnav = [
+  { to: 'characters', label: '캐릭터' },
+  { to: 'scenarios', label: '시나리오' },
+  { to: 'sessions', label: '세션 기록' },
 ];
 
 export function GroupShell() {
@@ -23,6 +31,8 @@ export function GroupShell() {
   const { data: group, isLoading, isError } = useGroupBySlug(slug);
   const { data: role } = useMyMembership(group?.id);
   const isAdmin = role === 'admin';
+  const isSolo = group?.is_solo ?? false;
+  const subnav = isSolo ? soloSubnav : sharedSubnav;
 
   useEffect(() => {
     if (group) setActiveSlug(group.slug);
@@ -45,7 +55,11 @@ export function GroupShell() {
       <div className="border-b">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-6 py-3">
           <div className="flex items-center gap-3">
-            {group.logo_url ? (
+            {isSolo ? (
+              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary">
+                <Sparkles className="h-4 w-4" />
+              </div>
+            ) : group.logo_url ? (
               <img
                 src={group.logo_url}
                 alt=""
@@ -57,8 +71,12 @@ export function GroupShell() {
               </div>
             )}
             <div className="flex flex-col leading-tight">
-              <span className="text-sm font-medium">{group.name}</span>
-              <span className="text-xs text-muted-foreground">/g/{group.slug}</span>
+              <span className="text-sm font-medium">
+                {isSolo ? '내 작업실' : group.name}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {isSolo ? '솔로 작업 · 단발 준비 · 비공개' : `/g/${group.slug}`}
+              </span>
             </div>
           </div>
           <nav className="-mx-2 flex items-center gap-1 overflow-x-auto">
@@ -79,7 +97,8 @@ export function GroupShell() {
                 {item.label}
               </NavLink>
             ))}
-            {isAdmin && (
+            {/* 설정(초대 발급 등) 은 공유 그룹의 admin 에게만 의미 — solo 에선 숨김 */}
+            {isAdmin && !isSolo && (
               <NavLink
                 to="settings"
                 end={false}
