@@ -17,6 +17,7 @@ const sharedSubnav = [
   { to: 'sessions', label: '세션 기록' },
   { to: 'relations', label: '관계 맵' },
   { to: 'recruitment', label: '구인' },
+  { to: 'members', label: '멤버' },
 ];
 
 const soloSubnav = [

@@ -76,7 +76,13 @@ export function AddParticipantDialog({
         <DialogHeader>
           <DialogTitle>참여자 추가</DialogTitle>
           <DialogDescription>
-            그룹 멤버 중에서 선택해 PL 또는 게스트로 추가합니다.
+            그룹 멤버 중에서 선택해 추가합니다.
+            <br />
+            <span className="text-xs">
+              <span className="font-medium">PL</span> = 정식 플레이어 ·{' '}
+              <span className="font-medium">게스트</span> = 일회성 참여자 (라벨만 다르고
+              기능은 동일)
+            </span>
           </DialogDescription>
         </DialogHeader>
 

@@ -6,6 +6,7 @@ import { GroupsPage } from './pages/GroupsPage';
 import { CreateGroupPage } from './pages/CreateGroupPage';
 import { JoinGroupPage } from './pages/JoinGroupPage';
 import { GroupSettingsPage } from './pages/GroupSettingsPage';
+import { MembersPage } from './pages/MembersPage';
 import { CharactersPage } from './pages/CharactersPage';
 import { CharacterNewPage } from './pages/CharacterNewPage';
 import { CharacterDetailPage } from './pages/CharacterDetailPage';
@@ -60,6 +61,7 @@ export const router = createBrowserRouter([
               { path: 'sessions/:sessionId', Component: SessionDetailPage },
               { path: 'relations', Component: RelationsPage },
               { path: 'recruitment', Component: RecruitmentPage },
+              { path: 'members', Component: MembersPage },
               { path: 'settings', Component: GroupSettingsPage },
             ],
           },
