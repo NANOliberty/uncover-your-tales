@@ -69,14 +69,31 @@ export function useSessionParticipants(sessionRunId: string | undefined) {
     enabled: !!sessionRunId && !!user && !sessionLoading,
     queryFn: async (): Promise<SessionParticipantWithProfile[]> => {
       if (!sessionRunId) return [];
-      const { data, error } = await supabase
+      // session_participants.user_id 와 profiles 사이엔 직접 FK 가 없어 nested select 가
+      // 안 풀린다. 두 번 쿼리 후 클라이언트에서 합친다.
+      const { data: rows, error } = await supabase
         .from('session_participants')
-        .select('*, profile:profiles(display_name, avatar_url)')
+        .select('*')
         .eq('session_run_id', sessionRunId)
-        .order('role', { ascending: true })  // gm 이 먼저
+        .order('role', { ascending: true })
         .order('joined_at', { ascending: true });
       if (error) throw error;
-      return (data ?? []) as unknown as SessionParticipantWithProfile[];
+      const parts = (rows ?? []) as SessionParticipantRow[];
+      if (parts.length === 0) return [];
+
+      const userIds = parts.map((p) => p.user_id);
+      const { data: profileRows, error: profileErr } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar_url')
+        .in('id', userIds);
+      if (profileErr) throw profileErr;
+
+      const byId = new Map(
+        ((profileRows ?? []) as { id: string; display_name: string; avatar_url: string | null }[]).map(
+          (p) => [p.id, { display_name: p.display_name, avatar_url: p.avatar_url }],
+        ),
+      );
+      return parts.map((p) => ({ ...p, profile: byId.get(p.user_id) ?? null }));
     },
   });
 }
