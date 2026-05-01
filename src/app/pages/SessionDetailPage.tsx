@@ -30,6 +30,7 @@ import {
   useUpdateParticipant,
   useUpdateSessionRun,
 } from '../features/sessions/mutations';
+import { AddParticipantDialog } from '../features/sessions/AddParticipantDialog';
 import { useScenario } from '../features/scenarios/api';
 import { useGroupCharacters } from '../features/characters/api';
 
@@ -224,15 +225,17 @@ export function SessionDetailPage() {
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-medium text-muted-foreground">참여자</h2>
           {isCreator && (
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() => toast.info('참여자 추가는 다음 라운드(M3.2.2) 에 추가됩니다')}
-            >
-              <UserPlus className="mr-1 h-3 w-3" />
-              추가
-            </Button>
+            <AddParticipantDialog
+              sessionRunId={session.id}
+              groupId={session.group_id}
+              currentParticipants={participants}
+              trigger={
+                <Button type="button" size="sm" variant="outline">
+                  <UserPlus className="mr-1 h-3 w-3" />
+                  추가
+                </Button>
+              }
+            />
           )}
         </div>
         {participants.length === 0 ? (

@@ -8,6 +8,7 @@ import { useCharacter } from '../features/characters/api';
 import { useUpdateCharacter } from '../features/characters/mutations';
 import { KokoroforiaExportDialog } from '../features/characters/KokoroforiaExportDialog';
 import { useSession } from '../features/auth/useSession';
+import { useSessionsByCharacter } from '../features/sessions/api';
 import { COC_GRID_ORDER, COC_LABELS, fullLabel } from '../lib/coc/characteristics';
 import { calculateDerived, calculateWealth, maxSanity } from '../lib/coc/derived';
 import {
@@ -101,6 +102,7 @@ export function CharacterDetailPage() {
           data={data as CoCData}
           isOwner={isOwner}
           inSoloGroup={group.is_solo}
+          groupSlug={group.slug}
         />
       ) : (
         // CoC 가 아닌 시스템 — 향후 분기. 임시 헤더만.
@@ -117,11 +119,13 @@ function CoCSheet({
   data,
   isOwner,
   inSoloGroup,
+  groupSlug,
 }: {
   character: CharacterRow;
   data: CoCData;
   isOwner: boolean;
   inSoloGroup: boolean;
+  groupSlug: string;
 }) {
   const derived = calculateDerived(data.characteristics, data.info?.age ?? null);
   const mythos = data.skills.find((s) => s.key === 'cthulhu_mythos');
@@ -265,6 +269,8 @@ function CoCSheet({
 
       <BackstorySection data={data} />
 
+      <CharacterSessionsSection characterId={character.id} groupSlug={groupSlug} />
+
       {data.memorableMoments?.trim() && (
         <section className="mb-6 rounded-lg border bg-card p-5">
           <h2 className="mb-2 text-sm font-medium text-muted-foreground">명장면</h2>
@@ -278,10 +284,6 @@ function CoCSheet({
           <p className="whitespace-pre-wrap text-sm">{data.notes}</p>
         </section>
       )}
-
-      <p className="mt-8 text-center text-xs text-muted-foreground">
-        코코포리아 채팅팔레트 export 는 M2.6 에서 추가됩니다.
-      </p>
     </>
   );
 }
@@ -540,6 +542,67 @@ function InventorySection({ data }: { data: CoCData }) {
               )}
             </span>
             {it.notes && <span className="text-xs text-muted-foreground">{it.notes}</span>}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/** 이 캐릭터가 참여한 세션 목록 (역참조). */
+function CharacterSessionsSection({
+  characterId,
+  groupSlug,
+}: {
+  characterId: string;
+  groupSlug: string;
+}) {
+  const { data: sessions = [], isLoading } = useSessionsByCharacter(characterId);
+  if (isLoading || sessions.length === 0) return null;
+
+  const STATUS_TONE: Record<string, string> = {
+    planned: 'bg-muted text-muted-foreground',
+    in_progress: 'bg-primary/10 text-primary',
+    completed: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+    cancelled: 'bg-muted text-muted-foreground',
+  };
+  const STATUS_LABEL: Record<string, string> = {
+    planned: '예정',
+    in_progress: '진행 중',
+    completed: '완료',
+    cancelled: '취소',
+  };
+
+  return (
+    <section className="mb-6 rounded-lg border bg-card p-5">
+      <h2 className="mb-3 text-sm font-medium text-muted-foreground">
+        참여 세션 <span className="ml-1 text-xs">{sessions.length}</span>
+      </h2>
+      <ul className="divide-y rounded-md border">
+        {sessions.map((s) => (
+          <li key={s.id}>
+            <Link
+              to={`/g/${groupSlug}/sessions/${s.id}`}
+              className="flex items-center justify-between gap-3 px-3 py-2 text-sm transition hover:bg-accent/50"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-medium">{s.title}</p>
+                {s.scheduled_at && (
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(s.scheduled_at).toLocaleString('ko-KR', {
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit',
+                    })}
+                  </p>
+                )}
+              </div>
+              <span
+                className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] ${STATUS_TONE[s.status] ?? ''}`}
+              >
+                {STATUS_LABEL[s.status] ?? s.status}
+              </span>
+            </Link>
           </li>
         ))}
       </ul>

@@ -3,6 +3,7 @@ import { ArrowLeft, BookOpen, Pencil } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import type { GroupRow } from '../lib/supabase/database.types';
 import { useScenario } from '../features/scenarios/api';
+import { useSessionsByScenario } from '../features/sessions/api';
 import { useSession } from '../features/auth/useSession';
 
 interface GroupOutletContext {
@@ -130,10 +131,74 @@ export function ScenarioDetailPage() {
         </section>
       )}
 
-      <p className="mt-8 text-center text-xs text-muted-foreground">
-        이 시나리오로 진행한 세션 기록은 다음 라운드(M3.2) 에 추가됩니다.
-      </p>
+      <ScenarioSessionsSection scenarioId={scenario.id} groupSlug={group.slug} />
     </div>
+  );
+}
+
+/** 이 시나리오로 진행된 세션 목록 (역참조). */
+function ScenarioSessionsSection({
+  scenarioId,
+  groupSlug,
+}: {
+  scenarioId: string;
+  groupSlug: string;
+}) {
+  const { data: sessions = [], isLoading } = useSessionsByScenario(scenarioId);
+
+  const STATUS_TONE: Record<string, string> = {
+    planned: 'bg-muted text-muted-foreground',
+    in_progress: 'bg-primary/10 text-primary',
+    completed: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+    cancelled: 'bg-muted text-muted-foreground',
+  };
+  const STATUS_LABEL: Record<string, string> = {
+    planned: '예정',
+    in_progress: '진행 중',
+    completed: '완료',
+    cancelled: '취소',
+  };
+
+  return (
+    <section className="mb-6 rounded-lg border bg-card p-5">
+      <h2 className="mb-3 text-sm font-medium text-muted-foreground">
+        굴린 세션 <span className="ml-1 text-xs">{sessions.length}</span>
+      </h2>
+      {isLoading ? (
+        <p className="text-sm text-muted-foreground">불러오는 중…</p>
+      ) : sessions.length === 0 ? (
+        <p className="text-sm text-muted-foreground">아직 굴린 적 없습니다.</p>
+      ) : (
+        <ul className="divide-y rounded-md border">
+          {sessions.map((s) => (
+            <li key={s.id}>
+              <Link
+                to={`/g/${groupSlug}/sessions/${s.id}`}
+                className="flex items-center justify-between gap-3 px-3 py-2 text-sm transition hover:bg-accent/50"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium">{s.title}</p>
+                  {s.scheduled_at && (
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(s.scheduled_at).toLocaleString('ko-KR', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                      })}
+                    </p>
+                  )}
+                </div>
+                <span
+                  className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] ${STATUS_TONE[s.status] ?? ''}`}
+                >
+                  {STATUS_LABEL[s.status] ?? s.status}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 

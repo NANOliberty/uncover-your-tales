@@ -84,4 +84,38 @@ export function useMyMembership(groupId: string | undefined) {
   });
 }
 
+/**
+ * 그룹 멤버 목록 + profile 정보 join.
+ * 세션 참여자 추가 등에서 사용.
+ */
+export interface GroupMemberWithProfile {
+  group_id: string;
+  user_id: string;
+  role: 'admin' | 'member' | 'guest';
+  joined_at: string;
+  profile: {
+    display_name: string;
+    avatar_url: string | null;
+  } | null;
+}
+
+export function useGroupMembers(groupId: string | undefined) {
+  const { user, isLoading: sessionLoading } = useSession();
+  return useQuery({
+    queryKey: ['groupMembers', groupId],
+    enabled: !!groupId && !!user && !sessionLoading,
+    queryFn: async (): Promise<GroupMemberWithProfile[]> => {
+      if (!groupId) return [];
+      const { data, error } = await supabase
+        .from('group_members')
+        .select('*, profile:profiles(display_name, avatar_url)')
+        .eq('group_id', groupId)
+        .order('role', { ascending: true })
+        .order('joined_at', { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as unknown as GroupMemberWithProfile[];
+    },
+  });
+}
+
 export const groupsQueryKeys = groupsKeys;
