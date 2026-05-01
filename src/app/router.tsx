@@ -18,6 +18,7 @@ import { ScenarioEditPage } from './pages/ScenarioEditPage';
 import { SessionsPage } from './pages/SessionsPage';
 import { SessionNewPage } from './pages/SessionNewPage';
 import { SessionDetailPage } from './pages/SessionDetailPage';
+import { SessionEditPage } from './pages/SessionEditPage';
 import { RelationsPage } from './pages/RelationsPage';
 import { RecruitmentPage } from './pages/RecruitmentPage';
 import { AuthLoginPage } from './pages/AuthLoginPage';
@@ -59,6 +60,7 @@ export const router = createBrowserRouter([
               { path: 'sessions', Component: SessionsPage },
               { path: 'sessions/new', Component: SessionNewPage },
               { path: 'sessions/:sessionId', Component: SessionDetailPage },
+              { path: 'sessions/:sessionId/edit', Component: SessionEditPage },
               { path: 'relations', Component: RelationsPage },
               { path: 'recruitment', Component: RecruitmentPage },
               { path: 'members', Component: MembersPage },

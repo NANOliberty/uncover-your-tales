@@ -1,18 +1,7 @@
 import { useState } from 'react';
 import { Link, Navigate, useOutletContext, useParams } from 'react-router';
-import { ArrowLeft, BookOpen, Crown, Trash2, User, UserPlus, X } from 'lucide-react';
+import { ArrowLeft, BookOpen, Crown, Pencil, User, UserPlus, X } from 'lucide-react';
 import { toast } from 'sonner';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '../components/ui/alert-dialog';
 import { Button } from '../components/ui/button';
 import { Textarea } from '../components/ui/textarea';
 import type {
@@ -25,7 +14,6 @@ import {
   useSessionRun,
 } from '../features/sessions/api';
 import {
-  useDeleteSessionRun,
   useRemoveParticipant,
   useUpdateParticipant,
   useUpdateSessionRun,
@@ -62,13 +50,10 @@ export function SessionDetailPage() {
   const { data: characters = [] } = useGroupCharacters(group.id);
 
   const updateRun = useUpdateSessionRun();
-  const deleteRun = useDeleteSessionRun();
   const updatePart = useUpdateParticipant();
   const removePart = useRemoveParticipant();
 
   const [notesDraft, setNotesDraft] = useState<string | null>(null);
-  const [delConfirmText, setDelConfirmText] = useState('');
-  const [delOpen, setDelOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -117,18 +102,6 @@ export function SessionDetailPage() {
     }
   };
 
-  const onDelete = async () => {
-    if (delConfirmText.trim() !== session.title.trim()) return;
-    try {
-      await deleteRun.mutateAsync(session.id);
-      toast.success('세션이 삭제되었어요');
-      setDelOpen(false);
-      window.history.back();
-    } catch (e) {
-      toast.error(`삭제 실패: ${(e as { message?: string })?.message ?? ''}`);
-    }
-  };
-
   const linkCharacter = async (characterId: string | null) => {
     if (!myParticipation) return;
     try {
@@ -152,6 +125,14 @@ export function SessionDetailPage() {
             목록
           </Link>
         </Button>
+        {isCreator && (
+          <Button asChild size="sm">
+            <Link to="edit">
+              <Pencil className="mr-1 h-3 w-3" />
+              편집
+            </Link>
+          </Button>
+        )}
       </div>
 
       {/* 헤더 */}
@@ -167,21 +148,7 @@ export function SessionDetailPage() {
               >
                 {STATUS_LABEL[session.status]}
               </span>
-              {session.scheduled_at && (
-                <span className="text-xs text-muted-foreground">
-                  예약 {formatDate(session.scheduled_at)}
-                </span>
-              )}
-              {session.started_at && (
-                <span className="text-xs text-muted-foreground">
-                  · 시작 {formatDate(session.started_at)}
-                </span>
-              )}
-              {session.ended_at && (
-                <span className="text-xs text-muted-foreground">
-                  · 종료 {formatDate(session.ended_at)}
-                </span>
-              )}
+              <DateBadges session={session} />
             </div>
             {scenario && (
               <Link
@@ -366,73 +333,58 @@ export function SessionDetailPage() {
         )}
       </section>
 
-      {/* 위험 영역 — 등록자만 */}
-      {isCreator && (
-        <section className="rounded-lg border border-destructive/30 bg-destructive/5 p-5">
-          <h2 className="text-sm font-medium text-destructive">위험 영역</h2>
-          <p className="mt-1 text-xs text-muted-foreground">
-            세션을 삭제합니다. 참여 기록(캐릭터 연결 포함)도 모두 사라집니다.
-          </p>
-          <div className="mt-3">
-            <AlertDialog
-              open={delOpen}
-              onOpenChange={(v) => {
-                setDelOpen(v);
-                if (!v) setDelConfirmText('');
-              }}
-            >
-              <AlertDialogTrigger asChild>
-                <Button type="button" variant="destructive">
-                  <Trash2 className="mr-1 h-4 w-4" />
-                  세션 삭제
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>정말 삭제할까요?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    <span className="font-medium text-foreground">{session.title}</span> 의
-                    참여 기록·메모가 영구 삭제됩니다. 되돌릴 수 없습니다.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <div className="space-y-1.5">
-                  <label className="text-xs text-muted-foreground">
-                    확인을 위해 제목을 정확히 입력하세요.
-                  </label>
-                  <input
-                    type="text"
-                    value={delConfirmText}
-                    onChange={(e) => setDelConfirmText(e.target.value)}
-                    placeholder={session.title}
-                    autoFocus
-                    className="h-9 w-full rounded-md border bg-input-background px-3 text-sm outline-none focus:border-ring"
-                  />
-                </div>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>취소</AlertDialogCancel>
-                  <AlertDialogAction
-                    disabled={
-                      delConfirmText.trim() !== session.title.trim() || deleteRun.isPending
-                    }
-                    onClick={(e) => {
-                      e.preventDefault();
-                      onDelete();
-                    }}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
-                  >
-                    {deleteRun.isPending ? '삭제 중…' : '삭제'}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        </section>
-      )}
-
-      <p className="mt-8 text-center text-xs text-muted-foreground">
-        참여자 추가, 캐릭터/시나리오 역참조 링크는 다음 라운드(M3.2.2).
-      </p>
     </div>
+  );
+}
+
+/**
+ * 일정 배지. 상태에 따라 가장 의미있는 시각만 강조해서 표시.
+ *  - planned: 예약 (강조)
+ *  - in_progress: 시작 (강조), 예약 (옅게)
+ *  - completed: 시작·종료 (강조)
+ *  - cancelled: 예약·시작 (있는 거)
+ */
+function DateBadges({
+  session,
+}: {
+  session: { status: SessionStatus; scheduled_at: string | null; started_at: string | null; ended_at: string | null };
+}) {
+  const items: { label: string; iso: string; emphasis: boolean }[] = [];
+  switch (session.status) {
+    case 'planned':
+      if (session.scheduled_at) items.push({ label: '예약', iso: session.scheduled_at, emphasis: true });
+      break;
+    case 'in_progress':
+      if (session.started_at) items.push({ label: '시작', iso: session.started_at, emphasis: true });
+      if (session.scheduled_at) items.push({ label: '예약', iso: session.scheduled_at, emphasis: false });
+      break;
+    case 'completed':
+      if (session.started_at) items.push({ label: '시작', iso: session.started_at, emphasis: true });
+      if (session.ended_at) items.push({ label: '종료', iso: session.ended_at, emphasis: true });
+      break;
+    case 'cancelled':
+      if (session.scheduled_at) items.push({ label: '예약', iso: session.scheduled_at, emphasis: false });
+      if (session.started_at) items.push({ label: '시작', iso: session.started_at, emphasis: false });
+      break;
+  }
+  if (items.length === 0) {
+    return <span className="text-xs text-muted-foreground">일정 미정</span>;
+  }
+  return (
+    <>
+      {items.map((it, i) => (
+        <span
+          key={`${it.label}-${i}`}
+          className={[
+            'text-xs',
+            it.emphasis ? 'text-foreground' : 'text-muted-foreground/70',
+          ].join(' ')}
+        >
+          {i > 0 && <span className="mx-1 text-muted-foreground/50">·</span>}
+          <span className="text-muted-foreground">{it.label}</span> {formatDate(it.iso)}
+        </span>
+      ))}
+    </>
   );
 }
 
