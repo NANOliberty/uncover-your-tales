@@ -103,11 +103,20 @@ export function AddParticipantDialog({
                   멤버 목록 불러오는 중…
                 </p>
               ) : available.length === 0 ? (
-                <p className="p-4 text-center text-sm text-muted-foreground">
-                  {currentUserIds.size === members.length
-                    ? '모든 그룹 멤버가 이미 참여 중입니다.'
-                    : '검색 결과가 없습니다.'}
-                </p>
+                <div className="space-y-2 p-4 text-center text-sm text-muted-foreground">
+                  {members.length <= 1 ? (
+                    <>
+                      <p>이 그룹엔 본인 외에 다른 멤버가 없습니다.</p>
+                      <p className="text-xs">
+                        설정 → 초대 코드로 친구를 먼저 초대하거나, 단발 모드는 M3.3 에서.
+                      </p>
+                    </>
+                  ) : currentUserIds.size === members.length ? (
+                    <p>모든 그룹 멤버가 이미 참여 중입니다.</p>
+                  ) : (
+                    <p>검색 결과가 없습니다.</p>
+                  )}
+                </div>
               ) : (
                 <ul className="divide-y">
                   {available.map((m) => (
