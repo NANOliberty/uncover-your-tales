@@ -71,7 +71,7 @@ export function SessionDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-4xl px-6 py-8 text-sm text-muted-foreground">
+      <div className="mx-auto max-w-6xl px-6 py-8 text-sm text-muted-foreground">
         세션 불러오는 중…
       </div>
     );
@@ -143,7 +143,7 @@ export function SessionDetailPage() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl px-6 py-8">
+    <div className="mx-auto max-w-6xl px-6 py-8">
       <div className="mb-4 flex items-center justify-between gap-3">
         <Button asChild size="sm" variant="ghost">
           <Link to=".." relative="path">

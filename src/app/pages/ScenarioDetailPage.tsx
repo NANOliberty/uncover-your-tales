@@ -33,7 +33,7 @@ export function ScenarioDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-4xl px-6 py-8 text-sm text-muted-foreground">
+      <div className="mx-auto max-w-6xl px-6 py-8 text-sm text-muted-foreground">
         시나리오 불러오는 중…
       </div>
     );
@@ -44,7 +44,7 @@ export function ScenarioDetailPage() {
   const gm = (scenario.gm_only ?? {}) as GMOnly;
 
   return (
-    <div className="mx-auto max-w-4xl px-6 py-8">
+    <div className="mx-auto max-w-6xl px-6 py-8">
       <div className="mb-4 flex items-center justify-between gap-3">
         <Button asChild size="sm" variant="ghost">
           <Link to=".." relative="path">
