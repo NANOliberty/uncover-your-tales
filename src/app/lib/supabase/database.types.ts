@@ -384,6 +384,73 @@ export type Database = {
           },
         ];
       };
+      character_relations: {
+        Row: {
+          id: string;
+          group_id: string;
+          from_character_id: string;
+          to_character_id: string;
+          session_run_id: string | null;
+          kind: Database['public']['Enums']['relation_kind'];
+          label: string;
+          note: string | null;
+          created_by: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          group_id: string;
+          from_character_id: string;
+          to_character_id: string;
+          session_run_id?: string | null;
+          kind?: Database['public']['Enums']['relation_kind'];
+          label: string;
+          note?: string | null;
+          created_by: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          group_id?: string;
+          from_character_id?: string;
+          to_character_id?: string;
+          session_run_id?: string | null;
+          kind?: Database['public']['Enums']['relation_kind'];
+          label?: string;
+          note?: string | null;
+          created_by?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'character_relations_group_id_fkey';
+            columns: ['group_id'];
+            referencedRelation: 'groups';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'character_relations_from_character_id_fkey';
+            columns: ['from_character_id'];
+            referencedRelation: 'characters';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'character_relations_to_character_id_fkey';
+            columns: ['to_character_id'];
+            referencedRelation: 'characters';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'character_relations_session_run_id_fkey';
+            columns: ['session_run_id'];
+            referencedRelation: 'session_runs';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -476,6 +543,7 @@ export type Database = {
       character_status: 'active' | 'retired' | 'dead';
       session_status: 'planned' | 'in_progress' | 'completed' | 'cancelled';
       session_role: 'gm' | 'player' | 'guest';
+      relation_kind: 'positive' | 'negative' | 'neutral' | 'bond' | 'mystery';
     };
     CompositeTypes: Record<string, never>;
   };
@@ -490,6 +558,10 @@ export type CharacterRow = Database['public']['Tables']['characters']['Row'];
 export type ScenarioRow = Database['public']['Tables']['scenarios']['Row'];
 export type SessionRunRow = Database['public']['Tables']['session_runs']['Row'];
 export type SessionParticipantRow = Database['public']['Tables']['session_participants']['Row'];
+export type CharacterRelationRow = Database['public']['Tables']['character_relations']['Row'];
+export type CharacterRelationInsert = Database['public']['Tables']['character_relations']['Insert'];
+export type CharacterRelationUpdate = Database['public']['Tables']['character_relations']['Update'];
+export type RelationKind = Database['public']['Enums']['relation_kind'];
 export type SessionStatus = Database['public']['Enums']['session_status'];
 export type SessionRole = Database['public']['Enums']['session_role'];
 export type GroupRole = Database['public']['Enums']['group_role'];
