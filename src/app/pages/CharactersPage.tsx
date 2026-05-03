@@ -5,6 +5,8 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import type { CharacterStatus, GroupRow, TrpgSystem } from '../lib/supabase/database.types';
 import { useGroupCharacters } from '../features/characters/api';
+import { useGroupMembers } from '../features/groups/api';
+import { useSession } from '../features/auth/useSession';
 
 interface GroupOutletContext {
   group: GroupRow;
@@ -37,10 +39,20 @@ const SORT_LABEL: Record<SortKey, string> = {
 export function CharactersPage() {
   const { group } = useOutletContext<GroupOutletContext>();
   const { data: characters = [], isLoading } = useGroupCharacters(group.id);
+  // 솔로는 owner 표시가 무의미하므로 fetch 도 안 함 (네트워크 절약).
+  const { data: members = [] } = useGroupMembers(group.is_solo ? undefined : group.id);
+  const { user } = useSession();
+  const myUserId = user?.id ?? null;
+
+  const ownerById = useMemo(
+    () => new Map(members.map((m) => [m.user_id, m.profile])),
+    [members],
+  );
 
   const [query, setQuery] = useState('');
   const [systemFilter, setSystemFilter] = useState<TrpgSystem | 'all'>('all');
   const [statusFilter, setStatusFilter] = useState<CharacterStatus | 'all'>('all');
+  const [ownerFilter, setOwnerFilter] = useState<string | 'all'>('all');
   const [sortKey, setSortKey] = useState<SortKey>('updated');
 
   // 갤러리에서 등장하는 시스템·상태만 필터로 노출 (빈 옵션 제거)
@@ -58,6 +70,7 @@ export function CharactersPage() {
     let arr = characters.filter((c) => {
       if (systemFilter !== 'all' && c.system !== systemFilter) return false;
       if (statusFilter !== 'all' && c.status !== statusFilter) return false;
+      if (ownerFilter !== 'all' && c.owner_id !== ownerFilter) return false;
       if (q) {
         const haystack = `${c.name} ${c.occupation ?? ''}`.toLowerCase();
         if (!haystack.includes(q)) return false;
@@ -72,14 +85,18 @@ export function CharactersPage() {
       return b.updated_at.localeCompare(a.updated_at);
     });
     return arr;
-  }, [characters, query, systemFilter, statusFilter, sortKey]);
+  }, [characters, query, systemFilter, statusFilter, ownerFilter, sortKey]);
 
   const hasFilters =
-    query.trim().length > 0 || systemFilter !== 'all' || statusFilter !== 'all';
+    query.trim().length > 0 ||
+    systemFilter !== 'all' ||
+    statusFilter !== 'all' ||
+    ownerFilter !== 'all';
   const clearFilters = () => {
     setQuery('');
     setSystemFilter('all');
     setStatusFilter('all');
+    setOwnerFilter('all');
   };
 
   return (
@@ -154,6 +171,27 @@ export function CharactersPage() {
               />
             )}
 
+            {!group.is_solo && members.length > 1 && (
+              <select
+                value={ownerFilter}
+                onChange={(e) => setOwnerFilter(e.target.value)}
+                className="h-9 rounded-md border bg-background px-2 text-sm"
+                aria-label="작성자 필터"
+              >
+                <option value="all">전체 작성자</option>
+                {myUserId && members.some((m) => m.user_id === myUserId) && (
+                  <option value={myUserId}>내 캐릭터</option>
+                )}
+                {members
+                  .filter((m) => m.user_id !== myUserId)
+                  .map((m) => (
+                    <option key={m.user_id} value={m.user_id}>
+                      {m.profile?.display_name ?? '(이름 없음)'}
+                    </option>
+                  ))}
+              </select>
+            )}
+
             <select
               value={sortKey}
               onChange={(e) => setSortKey(e.target.value as SortKey)}
@@ -185,6 +223,9 @@ export function CharactersPage() {
             <ul className="divide-y rounded-lg border bg-card">
               {filtered.map((c) => {
                 const isInactive = c.status !== 'active';
+                const owner = ownerById.get(c.owner_id) ?? null;
+                const isMine = c.owner_id === myUserId;
+                const showOwner = !group.is_solo;
                 return (
                   <li key={c.id}>
                     <Link
@@ -219,6 +260,32 @@ export function CharactersPage() {
                           {c.occupation ? ` · ${c.occupation}` : ''}
                         </span>
                       </div>
+                      {showOwner && (
+                        <span
+                          className={[
+                            'inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px]',
+                            isMine
+                              ? 'border-primary/40 bg-primary/10 text-primary'
+                              : 'bg-card text-muted-foreground',
+                          ].join(' ')}
+                          title={
+                            isMine ? '내가 만든 캐릭터' : `${owner?.display_name ?? '(이름 없음)'} 의 캐릭터`
+                          }
+                        >
+                          {owner?.avatar_url ? (
+                            <img
+                              src={owner.avatar_url}
+                              alt=""
+                              className="h-4 w-4 rounded-full border object-cover"
+                            />
+                          ) : (
+                            <User className="h-3 w-3" />
+                          )}
+                          <span className="max-w-[8ch] truncate">
+                            {isMine ? '나' : owner?.display_name ?? '?'}
+                          </span>
+                        </span>
+                      )}
                       {isInactive && (
                         <span
                           className={[
