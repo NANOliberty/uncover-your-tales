@@ -53,14 +53,23 @@ cp .env.example .env.local
 - Mailpit (이메일 캡처): http://127.0.0.1:54324
 - API: http://127.0.0.1:54321
 
-스키마를 바꿨을 때:
+`npm run dev` 은 시작 전에 `supabase migration up` 을 자동으로 돌려서
+아직 적용 안 된 마이그레이션을 자동 반영합니다 (= `git pull && npm run dev`
+만 하면 새 테이블이 알아서 따라옴, 기존 데이터는 안 날아감).
+
+supabase 가 안 켜져 있으면 predev 가 실패하니까 `npx supabase start` 를
+먼저 한 번 돌려두세요.
+
+스키마를 바꿨을 때 (= 새 마이그레이션 파일을 직접 추가했을 때):
 
 ```bash
-# 마이그레이션을 새 파일로 추가 (예: 0002_xxx.sql) 한 뒤
-supabase db reset            # 로컬 DB 를 처음부터 다시 만들기
-# 그리고 타입 재생성
-supabase gen types typescript --local > src/app/lib/supabase/database.types.ts
+# 마이그레이션을 새 파일로 추가 (예: 0013_xxx.sql)
+npm run db:reset      # 데이터 날리고 0001 부터 다시 — 시드도 다시 들어감
+npm run db:types      # 타입 재생성
 ```
+
+데이터를 보존하면서 새 마이그레이션만 적용하려면 `npm run dev` 한 번 돌리거나
+`npx supabase migration up` 직접 호출.
 
 ### 3. OAuth (Discord / Google)
 

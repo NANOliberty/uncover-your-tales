@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "dev": "vite"
+    "dev": "vite",
+    "predev": "npx supabase migration up",
+    "db:reset": "npx supabase db reset",
+    "db:types": "npx supabase gen types typescript --local > src/app/lib/supabase/database.types.ts"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
